@@ -1,0 +1,386 @@
+/* ============================================================
+   controls.css — pasek kontrolny, filtry, summary, bulk bar, paginacja,
+                  słowniki, tunel SSH/VNC, skaner, funkcje dodatkowe
+   ============================================================ */
+
+/* ===== PASEK KONTROLNY (nad tabelą) ===== */
+.controls {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 10px;
+	margin-bottom: 12px;
+}
+
+.autoPingToggle {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	color: var(--text-secondary);
+	font-size: 13px;
+	white-space: nowrap;
+}
+
+.autoPingToggle select {
+	min-height: 34px;
+	padding: 4px 8px;
+}
+
+.autoPingToggle input[type="checkbox"] {
+	min-height: auto;
+	width: 16px;
+	height: 16px;
+}
+
+/* ===== STAŁY PRZYCISK ZAPISU ===== */
+.saveButton {
+	position: relative;
+	border-color: var(--input-border);
+}
+
+.saveButton.dirty {
+	border-color: var(--primary-border);
+	background: var(--primary-bg);
+	color: var(--primary-text);
+	animation: savePulse 2s ease-in-out infinite;
+}
+
+.saveButton.dirty:hover {
+	background: var(--primary-bg-hover);
+}
+
+@keyframes savePulse {
+	0%, 100% {
+		box-shadow: 0 0 0 0 rgba(21, 130, 102, 0.0);
+	}
+
+	50% {
+		box-shadow: 0 0 0 4px rgba(21, 130, 102, 0.25);
+	}
+}
+
+.unsavedIndicator {
+	font-size: 12px;
+	color: var(--status-checking);
+	font-weight: 700;
+	white-space: nowrap;
+	align-self: center;
+}
+
+.unsavedIndicator.hidden {
+	display: none;
+}
+
+/* ===== SUMMARY (metryki) ===== */
+.summary {
+	display: grid;
+	grid-template-columns: repeat(4, minmax(100px, 1fr));
+	gap: 10px;
+	margin-bottom: 14px;
+}
+
+.metric {
+	border: 1px solid var(--border-color);
+	border-radius: 8px;
+	background: var(--bg-surface);
+	padding: 12px;
+}
+
+.metric strong {
+	display: block;
+	font-size: 24px;
+}
+
+.metric span {
+	color: var(--text-muted);
+	font-size: 13px;
+}
+
+/* ===== BULK BAR ===== */
+.bulkActions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 10px;
+	padding: 12px;
+	margin-bottom: 14px;
+	border: 1px solid var(--primary-border);
+	border-radius: 8px;
+	background: var(--bg-surface);
+}
+
+.bulkActions.hidden {
+	display: none;
+}
+
+.bulkCount {
+	font-weight: 700;
+	margin-right: 4px;
+}
+
+.bulkActionGroup {
+	display: flex;
+	gap: 6px;
+	align-items: center;
+}
+
+/* ===== FILTRY (zakładka) ===== */
+.filtersGrid {
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: 10px;
+}
+
+/* ===== FORMULARZ DODAWANIA / EDYCJI ===== */
+.editorHeader {
+	display: flex;
+	justify-content: space-between;
+	gap: 12px;
+	align-items: flex-start;
+	margin-bottom: 14px;
+}
+
+.formGrid {
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: 10px;
+}
+
+.formActions {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 9px;
+	margin-top: 12px;
+}
+
+/* ===== SŁOWNIKI (typy / obszary / grupy) ===== */
+.dictionary {
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: 14px;
+	margin-top: 8px;
+}
+
+.inlineAdd {
+	display: grid;
+	grid-template-columns: minmax(120px, 1fr) auto;
+	gap: 8px;
+	margin-bottom: 8px;
+}
+
+.chips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+}
+
+.dictChip {
+	display: inline-flex;
+	align-items: center;
+	gap: 5px;
+	padding: 4px 7px;
+	border-radius: 999px;
+	background: var(--chip-bg);
+	color: var(--chip-text);
+	font-size: 13px;
+}
+
+.dictChip button {
+	min-height: 20px;
+	width: 20px;
+	padding: 0;
+	border-radius: 999px;
+	line-height: 1;
+}
+
+/* ===== TUNEL SSH/VNC (w Konfiguracji) ===== */
+.tunnelSettings {
+	margin-top: 16px;
+	padding-top: 14px;
+	border-top: 1px solid var(--border-color-light);
+}
+
+.tunnelGrid {
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: 10px;
+	margin-bottom: 10px;
+}
+
+/* ===== SKANER SIECI ===== */
+.scannerGrid {
+	display: grid;
+	grid-template-columns: 1fr auto;
+	gap: 10px;
+	margin-bottom: 10px;
+}
+
+#scanStatus {
+	margin-bottom: 10px;
+	font-size: 13px;
+	min-height: 18px;
+}
+
+.scanResultRow {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 10px;
+	padding: 8px 10px;
+	border: 1px solid var(--border-color-light);
+	border-radius: 7px;
+	margin-bottom: 6px;
+	background: var(--bg-surface-alt);
+}
+
+.scanResultRow .scanIp {
+	font-family: Consolas, monospace;
+	font-weight: 700;
+}
+
+.scanResultRow.inDatabase {
+	opacity: 0.65;
+}
+
+/* ===== FUNKCJE DODATKOWE (bulk mode toggle) ===== */
+.extraFeatures {
+	margin-top: 16px;
+	padding-top: 14px;
+	border-top: 1px solid var(--border-color-light);
+}
+
+.toggleLabel {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	font-size: 14px;
+	color: var(--text-primary);
+	cursor: pointer;
+}
+
+.toggleLabel input[type="checkbox"] {
+	min-height: auto;
+	width: 17px;
+	height: 17px;
+	cursor: pointer;
+}
+
+/* ===== SZYBKIE POŁĄCZENIA (zakładka Połączenia) ===== */
+.quickConnGrid {
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: 10px;
+	margin-bottom: 12px;
+}
+
+.quickConnButtons {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+
+.quickConnButtons .httpsButton {
+	cursor: pointer;
+}
+
+/* ===== HISTORIA SESJI (zakładka Historia) ===== */
+.sessionHistoryHeader {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 10px;
+}
+
+.historyList {
+	list-style: none;
+	margin: 10px 0 0;
+	padding: 0;
+	max-height: 400px;
+	overflow-y: auto;
+	border: 1px solid var(--border-color-light);
+	border-radius: 8px;
+}
+
+.historyItem {
+	display: flex;
+	gap: 10px;
+	padding: 8px 10px;
+	border-bottom: 1px solid var(--border-color-light);
+	font-size: 13px;
+}
+
+.historyItem:last-child {
+	border-bottom: none;
+}
+
+.historyItem.empty {
+	color: var(--text-faint);
+	justify-content: center;
+}
+
+.historyTime {
+	color: var(--text-faint);
+	font-family: Consolas, monospace;
+	white-space: nowrap;
+	flex-shrink: 0;
+}
+
+.historyMessage {
+	color: var(--text-primary);
+}
+
+.historyItem.error .historyMessage {
+	color: var(--danger-text);
+}
+
+.historyItem.success .historyMessage {
+	color: var(--status-online);
+}
+
+/* ===== PAGINACJA (pod tabelą) ===== */
+.pagination {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 12px;
+	margin-top: 12px;
+}
+
+.pagination label {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.pagination select {
+	min-width: 110px;
+}
+
+.pageControls {
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	gap: 8px;
+}
+
+.pageControls button:disabled {
+	cursor: default;
+	opacity: 0.45;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 760px) {
+	.summary {
+		grid-template-columns: repeat(2, minmax(120px, 1fr));
+	}
+
+	.pagination {
+		display: grid;
+		align-items: stretch;
+	}
+
+	.pageControls {
+		justify-content: space-between;
+	}
+}
