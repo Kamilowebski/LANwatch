@@ -1,0 +1,729 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Panel urządzeń</title>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#158266">
+  <link rel="icon" type="image/png" sizes="32x32" href="/static/icons/favicon-32.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="/static/icons/icon-192.png">
+  <link rel="apple-touch-icon" href="/static/icons/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Panel urządzeń">
+
+  <link rel="stylesheet" href="/static/css/base.css">
+  <link rel="stylesheet" href="/static/css/controls.css">
+  <link rel="stylesheet" href="/static/css/tabs.css">
+  <link rel="stylesheet" href="/static/css/table.css">
+  <link rel="stylesheet" href="/static/css/watchdog.css">
+  <link rel="stylesheet" href="/static/css/modals.css">
+
+  <script>
+    (function () {
+      try {
+        var saved = localStorage.getItem("devicePanelTheme");
+        var theme = saved || (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        if (theme === "dark") {
+          document.documentElement.classList.add("theme-dark");
+        }
+      } catch (error) {
+        /* ignore storage errors */
+      }
+    })();
+  </script>
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div>
+        <h1>Panel urządzeń</h1>
+      </div>
+      <div class="topActions">
+        <button id="themeToggleButton" class="themeToggle" type="button" title="Przełącz motyw">🌙</button>
+      </div>
+    </header>
+
+    <div class="stickySearch">
+      <input id="searchInput" type="search" placeholder="Szukaj: nazwa, IP, obszar, typ, słowo kluczowe">
+    </div>
+
+    <div class="layout">
+      <!-- LEWA KOLUMNA: tabela urządzeń -->
+      <section class="leftColumn">
+        <section class="controls">
+          <div class="viewToggle">
+            <button id="viewTableButton" type="button" class="active" title="Widok tabeli">☰</button>
+            <button id="viewCardsButton" type="button" title="Widok kart">▦</button>
+          </div>
+          <select id="typeFilter">
+            <option value="">Wszystkie typy</option>
+          </select>
+          <select id="areaFilter">
+            <option value="">Wszystkie obszary</option>
+          </select>
+          <select id="sortSelect">
+            <option value="name">Sortuj: nazwa</option>
+            <option value="area">Sortuj: obszar</option>
+            <option value="type">Sortuj: typ</option>
+            <option value="ip">Sortuj: IP</option>
+            <option value="status">Sortuj: status</option>
+          </select>
+          <button id="openDashboardButton" type="button" title="Otwórz dashboard w nowej karcie">📺 Dashboard</button>
+		  <button id="openStatsButton" type="button" title="Statystyki pingów z wybranego dnia">📊 Statystyki</button>
+          <button id="pingAllButton" class="primary">Ping widoczne</button>
+          <button id="saveChangesButton" class="saveButton" type="button" title="Zapisz wszystkie zmiany do pliku (wymaga hasła)">Zapisz zmiany</button>
+          <span id="unsavedIndicator" class="unsavedIndicator hidden">● niezapisane zmiany</span>
+          <button id="refreshButton" title="Wczytaj ponownie listę z pliku">Odśwież</button>
+          <label class="autoPingToggle" title="Pinguje tylko aktualnie widoczne (przefiltrowane) urządzenia, w tle, cyklicznie">
+            <input type="checkbox" id="autoPingToggle">
+            Auto-ping widocznych, co
+            <select id="autoPingInterval">
+              <option value="60000">1 min</option>
+              <option value="300000" selected>5 min</option>
+              <option value="900000">15 min</option>
+            </select>
+          </label>
+        </section>
+
+        <section class="summary" id="summary"></section>
+
+        <section class="bulkActions hidden" id="bulkActionsBar">
+          <span id="bulkCount" class="bulkCount"></span>
+          <button id="selectAllFilteredButton" type="button">Zaznacz wszystkie widoczne</button>
+          <button id="clearSelectionButton" type="button">Odznacz wszystko</button>
+          <div class="bulkActionGroup">
+            <select id="bulkAreaSelect">
+              <option value="">Zmień obszar na…</option>
+            </select>
+            <button id="bulkAreaApply" type="button">Zastosuj</button>
+          </div>
+          <div class="bulkActionGroup">
+            <select id="bulkGroupSelect">
+              <option value="">Zmień grupę na…</option>
+            </select>
+            <button id="bulkGroupApply" type="button">Zastosuj</button>
+          </div>
+          <div class="bulkActionGroup">
+            <select id="bulkTypeSelect">
+              <option value="">Zmień typ na…</option>
+            </select>
+            <button id="bulkTypeApply" type="button">Zastosuj</button>
+          </div>
+          <button id="bulkDeleteButton" type="button" class="danger">Usuń zaznaczone</button>
+        </section>
+
+        <section class="cardsWrap hidden" id="devicesCards"></section>
+
+        <section class="tableWrap">
+          <table id="devicesTable">
+            <thead>
+              <tr>
+                <th class="selectCell"><input type="checkbox" id="selectAllCheckbox" title="Zaznacz/odznacz widoczne na stronie"></th>
+                <th class="favCell"></th>
+                <th>Nazwa</th>
+                <th>IP</th>
+                <th>Lokacja</th>
+                <th>Akcje</th>
+              </tr>
+            </thead>
+            <tbody id="devicesBody"></tbody>
+          </table>
+        </section>
+
+        <section class="pagination">
+          <label>
+            Na stronie
+            <select id="pageSizeSelect">
+              <option value="10">10</option>
+              <option value="20" selected>20</option>
+              <option value="50">50</option>
+              <option value="all">Wszystkie</option>
+            </select>
+          </label>
+          <div class="pageControls">
+            <button id="prevPageButton" type="button">Poprzednia</button>
+            <span id="pageInfo"></span>
+            <button id="nextPageButton" type="button">Następna</button>
+          </div>
+        </section>
+      </section>
+
+      <!-- PRAWA KOLUMNA: akordeon zakładek -->
+      <aside class="rightColumn" id="rightColumn">
+        <div class="tabs" id="tabsBar">
+          <button class="tabButton" data-tab="add" type="button">Dodaj urządzenie</button>
+          <button class="tabButton" data-tab="connections" type="button">Połączenia</button>
+          <button class="tabButton" data-tab="config" type="button">Konfiguracja</button>
+          <button class="tabButton" data-tab="watchdog" type="button">Watchdog</button>
+          <button class="tabButton" data-tab="history" type="button">Historia</button>
+          <button class="tabButton" data-tab="filters" type="button">Filtry</button>
+          <button class="tabButton" data-tab="scanner" type="button">Skaner</button>
+        </div>
+
+        <div class="tabPanels">
+          <!-- ZAKŁADKA: DODAJ URZĄDZENIE -->
+          <section class="tabPanel" data-panel="add">
+            <div class="editorHeader">
+              <div>
+                <h2 id="editorTitle">Dodaj urządzenie</h2>
+                <p>Zmiany zapisują się do pliku dopiero po kliknięciu „Zapisz zmiany" (nad tabelą) i wpisaniu hasła.</p>
+              </div>
+            </div>
+            <form id="deviceForm">
+              <input type="hidden" id="editName">
+              <div class="formGrid">
+                <label>
+                  Nazwa
+                  <input id="deviceName" required placeholder="T104-0192">
+                </label>
+                <label>
+                  Adresowanie
+                  <select id="deviceAddressMode">
+                    <option value="dhcp">DHCP / po nazwie</option>
+                    <option value="static">Stałe IP</option>
+                  </select>
+                </label>
+                <label>
+                  IP
+                  <input id="deviceIp" placeholder="Opcjonalnie, np. 192.168.1.192">
+                </label>
+                <label>
+                  Maska podsieci (opcjonalnie)
+                  <input id="deviceNetmask" placeholder="np. 255.255.255.0">
+                </label>
+                <label>
+                  Brama (opcjonalnie)
+                  <input id="deviceGateway" placeholder="np. 192.168.1.1">
+                </label>
+                <label>
+                  DNS (opcjonalnie)
+                  <input id="deviceDns" placeholder="np. 8.8.8.8">
+                </label>
+                <label>
+                  Typ
+                  <select id="deviceType"></select>
+                </label>
+                <label>
+                  Obszar
+                  <select id="deviceArea"></select>
+                </label>
+                <label>
+                  Grupa / maszyna
+                  <select id="deviceGroup">
+                    <option value="">— brak —</option>
+                  </select>
+                </label>
+                <label>
+                  Słowa kluczowe
+                  <input id="deviceKeywords" placeholder="terminal, etykiety, linia 1">
+                </label>
+                <label id="numeratorField" class="hidden">
+                  Numerator
+                  <input id="deviceNumerator" placeholder="np. numerator wagi">
+                </label>
+                <label>
+                  System ID
+                  <input id="deviceSystemId" placeholder="opcjonalnie">
+                </label>
+                <label>
+                  Użytkownik VNC
+                  <input id="deviceVncUsername" placeholder="np. pi (dla Raspberry) - opcjonalnie">
+                </label>
+                <label>
+                  Adres MAC (dla Wake on LAN, opcjonalnie)
+                  <input id="deviceMac" placeholder="AA:BB:CC:DD:EE:FF">
+                </label>
+                <label>
+                  Notatka
+                  <input id="deviceNote" placeholder="Opis lub lokalizacja">
+                </label>
+                <label class="fullWidthLabel">
+                  Zależy od (urządzenia, od których to zależy)
+                  <div class="depsPicker" id="depsPicker">
+                    <input id="depsFilterInput" type="text" placeholder="Filtruj urządzenia…">
+                    <div class="depsList" id="depsList"></div>
+                    <div class="depsSelected" id="depsSelected"></div>
+                  </div>
+                </label>
+              </div>
+              <div class="formActions">
+                <button type="submit" class="primary">Dodaj / aktualizuj</button>
+                <button type="button" id="deleteEditButton" class="danger hidden">Usuń edytowane</button>
+                <button type="button" id="clearFormButton">Wyczyść</button>
+                <button type="button" id="forgetPasswordButton" class="linkButton">Zmień hasło zapisu</button>
+                <span id="editHint" class="muted"></span>
+              </div>
+            </form>
+          </section>
+
+          <!-- ZAKŁADKA: POŁĄCZENIA -->
+          <section class="tabPanel" data-panel="connections">
+            <h2>Szybkie połączenia</h2>
+            <p class="muted">Wpisz nazwę, adres IP lub hostname — nie musi być w bazie urządzeń. Użytkownik SSH opcjonalny: jeśli pusty, brany jest domyślny z Konfiguracji, a jeśli i tam pusty — SSH łączy się bez użytkownika (raw).</p>
+            <div class="quickConnGrid">
+              <label>
+                Host / IP / nazwa
+                <input id="quickHostInput" placeholder="np. T104-0192 albo 192.168.1.50">
+              </label>
+              <label>
+                Użytkownik SSH (opcjonalnie)
+                <input id="quickSshUserInput" placeholder="np. operator — puste = domyślny z Konfiguracji">
+              </label>
+            </div>
+            <div class="quickConnButtons">
+              <button id="quickVncButton" type="button">VNC</button>
+              <button id="quickSshButton" type="button">SSH</button>
+              <a id="quickHttpsLink" class="httpsButton" href="#" target="_blank" rel="noopener noreferrer">HTTPS</a>
+              <a id="quickHttpLink" class="httpsButton" href="#" target="_blank" rel="noopener noreferrer">HTTP</a>
+            </div>
+          </section>
+
+          <!-- ZAKŁADKA: KONFIGURACJA -->
+          <section class="tabPanel" data-panel="config">
+            <h2>Konfiguracja</h2>
+            <div class="dictionary">
+              <div>
+                <h3>Typy</h3>
+                <div class="inlineAdd">
+                  <input id="newTypeInput" placeholder="np. skaner">
+                  <button id="addTypeButton" type="button">Dodaj typ</button>
+                </div>
+                <div id="typeChips" class="chips"></div>
+              </div>
+              <div>
+                <h3>Obszary</h3>
+                <div class="inlineAdd">
+                  <input id="newAreaInput" placeholder="np. LINIA 1">
+                  <button id="addAreaButton" type="button">Dodaj obszar</button>
+                </div>
+                <div id="areaChips" class="chips"></div>
+              </div>
+              <div>
+                <h3>Grupy / maszyny</h3>
+                <p class="muted">Łączy ze sobą powiązane urządzenia (np. wszystkie głowice i ekran jednej maszyny), niezależnie od typu i obszaru.</p>
+                <div class="inlineAdd">
+                  <input id="newGroupInput" placeholder="np. GLMI_EVO_7">
+                  <button id="addGroupButton" type="button">Dodaj grupę</button>
+                </div>
+                <div id="groupChips" class="chips"></div>
+              </div>
+            </div>
+            <div class="tunnelSettings">
+              <h3>Zdalny dostęp: SSH i VNC</h3>
+              <p class="muted">Przyciski „SSH" i „VNC" pojawiają się po rozwinięciu dowolnego urządzenia (kliknij wiersz). „SSH" otwiera nowe okno konsoli z poleceniem SSH — hasło wpisujesz ręcznie. „VNC" dla typu „terminal" łączy się przez tunel (localhost:&lt;lokalny port&gt;, wymaga wcześniej otwartego SSH), dla pozostałych typów łączy się bezpośrednio po IP (zdalny port).</p>
+              <div class="tunnelGrid">
+                <label>
+                  Domyślny użytkownik SSH
+                  <input id="sshUserInput" placeholder="np. operator">
+                </label>
+                <label>
+                  Lokalny port VNC (tunel SSH)
+                  <input id="vncLocalPortInput" type="number" min="1" max="65535" placeholder="5900">
+                </label>
+                <label>
+                  Zdalny port VNC
+                  <input id="vncRemotePortInput" type="number" min="1" max="65535" placeholder="5900">
+                </label>
+                <label>
+                  Ścieżka do vncviewer.exe (opcjonalnie)
+                  <input id="vncViewerPathInput" placeholder="wykrywane automatycznie, jeśli puste">
+                </label>
+              </div>
+              <button id="saveTunnelSettingsButton" type="button">Zapisz ustawienia tunelu</button>
+            </div>
+            <div class="extraFeatures">
+              <h3>Funkcje dodatkowe</h3>
+              <label class="toggleLabel">
+                <input type="checkbox" id="bulkModeToggle">
+                Zaznaczanie wielu urządzeń (akcje grupowe: zmiana obszaru/grupy/typu, usuwanie)
+              </label>
+            </div>
+
+            <div class="statsSettings">
+              <h3>Statystyki pingów</h3>
+              <p class="muted">Backend pinguje wszystkie urządzenia w tle i zapisuje wyniki do plików dziennych (<code>stats/stats_RRRR-MM-DD.json</code>). Działa niezależnie od otwartej karty.</p>
+              <label class="toggleLabel">
+                <input type="checkbox" id="statsEnabledInput">
+                Zbieraj statystyki w tle
+              </label>
+              <div class="statsGrid">
+                <label>
+                  Interwał pingowania (minuty)
+                  <input id="statsIntervalInput" type="number" min="1" max="1440" step="1" value="15">
+                </label>
+                <label>
+                  Ile dni trzymać
+                  <input id="statsRetentionInput" type="number" min="1" max="3650" step="1" value="90">
+                </label>
+                <label>
+                  Równoległość pingów
+                  <input id="statsConcurrencyInput" type="number" min="4" max="64" step="4" value="24">
+                </label>
+              </div>
+              <div class="statsActions">
+                <button id="statsRunNowButton" type="button">Uruchom cykl teraz</button>
+                <span id="statsRunNowStatus" class="muted"></span>
+              </div>
+            </div>
+
+            <div class="statsSettings">
+              <h3>Kopie zapasowe</h3>
+              <p class="muted">Automatyczna kopia <code>devices.json</code>, <code>config.json</code> i statystyk z poprzedniego dnia do folderu <code>backups/</code>.</p>
+              <label class="toggleLabel">
+                <input type="checkbox" id="backupEnabledInput">
+                Automatyczna kopia zapasowa
+              </label>
+              <div class="statsGrid">
+                <label>
+                  Godzina kopii
+                  <input id="backupHourInput" type="number" min="0" max="23" step="1" value="13">
+                </label>
+                <label>
+                  Minuta
+                  <input id="backupMinuteInput" type="number" min="0" max="59" step="1" value="30">
+                </label>
+                <label>
+                  Ile dni trzymać kopie
+                  <input id="backupRetentionInput" type="number" min="1" max="3650" step="1" value="30">
+                </label>
+              </div>
+              <div class="statsActions">
+                <button id="backupNowButton" type="button">Wykonaj kopię teraz</button>
+                <span id="backupNowStatus" class="muted"></span>
+              </div>
+            </div>
+          </section>
+
+          <!-- ZAKŁADKA: WATCHDOG -->
+          <section class="tabPanel" data-panel="watchdog">
+            <h2>Watchdog</h2>
+            <p class="muted">Dodaj własne maszyny do obserwacji — nie muszą być w bazie urządzeń. Lista obserwowanych i historia pingów zapisywane są w localStorage. Wyświetlamy 5 ostatnich pingów na maszynę. Minimalny interwał: 1000 ms.</p>
+
+            <div class="watchdogAddHeader">
+              <button id="watchdogToggleAddFormButton" type="button" class="watchdogAddToggle">+ Dodaj maszynę</button>
+            </div>
+
+            <div class="watchdogAddBox collapsed" id="watchdogAddBox">
+              <label>
+                Nazwa (etykieta)
+                <input id="watchdogNameInput" placeholder="np. Kasa 1">
+              </label>
+              <label>
+                Host / IP
+                <input id="watchdogHostInput" placeholder="np. 192.168.1.50 lub T104-0192">
+              </label>
+              <label>
+                Interwał (ms)
+                <input id="watchdogIntervalInput" type="number" min="1000" step="1000" value="5000">
+              </label>
+              <div class="watchdogAddActions">
+                <button id="watchdogAddButton" type="button" class="primary">Dodaj do obserwowanych</button>
+                <button id="watchdogCancelAddButton" type="button">Anuluj</button>
+              </div>
+            </div>
+
+           <div class="watchdogSettingsHeader">
+              <button id="watchdogToggleSettingsButton" type="button" class="watchdogSettingsToggle">⚙ Ustawienia Watchdoga</button>
+              <span id="watchdogStatusBadge" class="watchdogStatusBadge"></span>
+            </div>
+
+            <div class="watchdogToolbar collapsed" id="watchdogSettingsBox">
+              <div class="watchdogToolbarLeft">
+                <label class="toggleLabel">
+                  <input type="checkbox" id="watchdogToggle">
+                  Watchdog aktywny
+                </label>
+                <label class="toggleLabel">
+                  <input type="checkbox" id="watchdogSoundToggle">
+                  Dźwięk przy awarii / powrocie
+                </label>
+                <label class="toggleLabel">
+                  <input type="checkbox" id="watchdogNotifyToggle">
+                  Powiadomienia systemowe
+                </label>
+                <label class="toggleLabel wdHistoryLabel">
+                  Historia (pingów):
+                  <input id="watchdogHistoryLengthInput" type="number" min="50" max="10000" step="50" value="1000">
+                </label>
+                <button id="watchdogSaveHistoryLengthButton" type="button">Zapisz</button>
+              </div>
+              <button id="watchdogClearHistoryButton" type="button" class="linkButton">Wyczyść historię pingów</button>
+            </div>
+
+            <div class="watchdogCards" id="watchdogDeviceList"></div>
+          </section>
+
+          <!-- ZAKŁADKA: HISTORIA -->
+          <section class="tabPanel" data-panel="history">
+            <div class="sessionHistoryHeader">
+              <h2>Historia działań (ta karta)</h2>
+              <button id="clearHistoryButton" type="button" class="linkButton">Wyczyść historię</button>
+            </div>
+            <p class="muted">Lista akcji wykonanych w tej karcie od jej otwarcia — zapisów, tuneli SSH/VNC, skanów. Znika po zamknięciu karty. Równolegle zapisywana jest trwała historia w localStorage (bez UI).</p>
+            <ul id="sessionHistoryList" class="historyList"></ul>
+          </section>
+
+          <!-- ZAKŁADKA: FILTRY -->
+          <section class="tabPanel" data-panel="filters">
+            <h2>Filtry</h2>
+            <div class="filtersGrid">
+              <label>
+                Status
+                <select id="statusFilter">
+                  <option value="">Dowolny</option>
+                  <option value="online">Online</option>
+                  <option value="offline">Offline</option>
+                  <option value="unknown">Nieznany</option>
+                </select>
+              </label>
+              <label>
+                Adresowanie
+                <select id="addressModeFilter">
+                  <option value="">Dowolne</option>
+                  <option value="dhcp">DHCP / po nazwie</option>
+                  <option value="static">Stałe IP</option>
+                </select>
+              </label>
+              <label>
+                Słowo kluczowe
+                <input id="keywordFilter" placeholder="np. etykiety">
+              </label>
+              <label>
+                Grupa / maszyna
+                <select id="groupFilter">
+                  <option value="">Wszystkie</option>
+                </select>
+              </label>
+              <label class="toggleLabel">
+                <input type="checkbox" id="favoritesOnlyFilter">
+                Tylko ulubione
+              </label>
+              <button id="clearFiltersButton" type="button">Wyczyść filtry</button>
+            </div>
+          </section>
+
+          <!-- ZAKŁADKA: SKANER -->
+          <section class="tabPanel" data-panel="scanner">
+            <h2>Skaner sieci</h2>
+            <p class="muted">Sprawdza, które adresy w podanym zakresie odpowiadają na ping, i pokazuje te, których nie ma jeszcze w bazie urządzeń. Maksymalnie 256 adresów naraz, w jednej podsieci.</p>
+            <div class="scannerGrid">
+              <input id="scanRangeInput" placeholder="192.168.1.1-192.168.1.254">
+              <button id="startScanButton" type="button" class="primary">Skanuj</button>
+            </div>
+            <div id="scanStatus" class="muted"></div>
+            <div id="scanResults"></div>
+
+            <h3 class="portScanHeading">Skan portów TCP</h3>
+            <p class="muted">Sprawdza popularne porty na wybranym hoście (SSH, HTTP, HTTPS, VNC, RDP, drukarki itp.). Używaj tylko na urządzeniach w swojej sieci.</p>
+            <div class="scannerGrid">
+              <input id="portScanHostInput" placeholder="192.168.1.50 lub T104-0192">
+              <button id="startPortScanButton" type="button" class="primary">Skanuj porty</button>
+            </div>
+            <div id="portScanStatus" class="muted"></div>
+            <div id="portScanResults"></div>
+
+            <h3 class="portScanHeading">Traceroute</h3>
+            <p class="muted">Pokazuje trasę pakietu do wybranego adresu (max 15 hopów). Może potrwać kilkadziesiąt sekund.</p>
+            <div class="scannerGrid">
+              <input id="tracerouteHostInput" placeholder="192.168.1.50 lub T104-0192">
+              <button id="startTracerouteButton" type="button" class="primary">Uruchom traceroute</button>
+            </div>
+          </section>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <div id="passwordModal" class="modalOverlay hidden">
+    <div class="modalBox">
+      <h3>Hasło administratora</h3>
+      <p class="muted">Wymagane do zapisu zmian w pliku na dysku. Zostanie zapamiętane w tej karcie przeglądarki do jej zamknięcia.</p>
+      <form id="passwordForm">
+        <input id="passwordModalInput" type="password" placeholder="Hasło" autocomplete="current-password">
+        <div class="modalActions">
+          <button type="button" id="passwordModalCancel">Anuluj</button>
+          <button type="submit" class="primary">Potwierdź</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="watchdogReportModal" class="modalOverlay hidden">
+    <div class="modalBox modalBoxLarge">
+      <div class="reportHeader">
+        <div>
+          <h3 id="reportTitle">Raport</h3>
+          <p class="muted" id="reportSubtitle"></p>
+        </div>
+        <button id="reportCloseButton" type="button">Zamknij</button>
+      </div>
+
+      <div class="reportRangeButtons" id="reportRangeButtons">
+        <button type="button" data-range="1h">Ostatnia godzina</button>
+        <button type="button" data-range="6h">6 godzin</button>
+        <button type="button" data-range="24h">24 godziny</button>
+        <button type="button" data-range="all" class="active">Wszystko</button>
+      </div>
+
+      <div class="reportStats" id="reportStats"></div>
+
+      <div class="reportChartWrap">
+        <canvas id="reportCanvas" width="1000" height="300"></canvas>
+        <div class="reportChartLegend">
+          <span><span class="legendBox online"></span> online (ms)</span>
+          <span><span class="legendBox timeout"></span> brak odpowiedzi</span>
+          <span><span class="legendBox offline"></span> offline</span>
+        </div>
+      </div>
+
+      <div class="reportTableWrap">
+        <table class="reportTable">
+          <thead>
+            <tr><th>Czas</th><th>Status</th><th>Opóźnienie</th></tr>
+          </thead>
+          <tbody id="reportTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div id="tracerouteModal" class="modalOverlay hidden">
+    <div class="modalBox modalBoxMedium">
+      <div class="reportHeader">
+        <div>
+          <h3 id="tracerouteTitle">Traceroute</h3>
+          <p class="muted" id="tracerouteSubtitle"></p>
+        </div>
+        <button id="tracerouteCloseButton" type="button">Zamknij</button>
+      </div>
+
+      <div id="tracerouteStatus" class="muted"></div>
+      <div id="tracerouteResults"></div>
+    </div>
+  </div>
+
+  <div id="statsModal" class="modalOverlay hidden">
+    <div class="modalBox modalBoxLarge">
+      <div class="reportHeader">
+        <div>
+          <h3 id="statsTitle">Statystyki</h3>
+          <p class="muted" id="statsSubtitle"></p>
+        </div>
+        <button id="statsCloseButton" type="button">Zamknij</button>
+      </div>
+
+      <div class="statsControls">
+        <label>
+          Wybierz dzień
+          <input id="statsDateInput" type="date">
+        </label>
+        <button id="statsPrevDayButton" type="button" title="Poprzedni dzień">◀</button>
+        <button id="statsNextDayButton" type="button" title="Następny dzień">▶</button>
+        <button id="statsTodayButton" type="button">Dziś</button>
+      </div>
+
+      <div id="statsStatus" class="muted"></div>
+
+      <div id="statsContent" class="statsContent">
+        <div class="reportStats" id="statsSummary"></div>
+
+        <h4 class="reportTableHeading">Uptime per urządzenie</h4>
+        <p class="muted statsHint">Posortowane od najgorszego. Kliknij urządzenie, żeby zobaczyć szczegóły.</p>
+        <div class="statsChartWrap">
+          <canvas id="statsUptimeCanvas" width="1200" height="400"></canvas>
+        </div>
+
+        <h4 class="reportTableHeading">Średnie opóźnienie w ciągu dnia</h4>
+        <p class="muted statsHint">Uśrednione dla wszystkich urządzeń w każdym cyklu pingowania.</p>
+        <div class="statsChartWrap">
+          <canvas id="statsLatencyCanvas" width="1200" height="300"></canvas>
+        </div>
+
+        <h4 class="reportTableHeading">Szczegóły urządzeń</h4>
+        <div class="statsTableWrap">
+          <table class="reportTable statsTable">
+            <thead>
+              <tr>
+                <th>Urządzenie</th>
+                <th>Pingi</th>
+                <th>Online</th>
+                <th>Offline</th>
+                <th>Uptime</th>
+                <th>Średni ms</th>
+                <th>Min ms</th>
+                <th>Max ms</th>
+              </tr>
+            </thead>
+            <tbody id="statsTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="statsEmpty" class="statsEmpty hidden">
+        <p>Brak statystyk dla wybranego dnia.</p>
+        <p class="muted">Sprawdź czy zbieranie statystyk jest włączone w Konfiguracji. Plik pojawi się po pierwszym cyklu pingowania.</p>
+      </div>
+    </div>
+  </div>
+
+  <div id="statsDeviceModal" class="modalOverlay hidden">
+    <div class="modalBox modalBoxLarge">
+      <div class="reportHeader">
+        <div>
+          <h3 id="statsDeviceTitle">Szczegóły</h3>
+          <p class="muted" id="statsDeviceSubtitle"></p>
+        </div>
+        <button id="statsDeviceCloseButton" type="button">Zamknij</button>
+      </div>
+
+	  <div class="statsControls">
+        <label>
+          Wybierz dzień
+          <input id="statsDeviceDateInput" type="date">
+        </label>
+        <button id="statsDevicePrevDayButton" type="button" title="Poprzedni dzień">◀</button>
+        <button id="statsDeviceNextDayButton" type="button" title="Następny dzień">▶</button>
+        <button id="statsDeviceTodayButton" type="button">Dziś</button>
+      </div>
+
+      <div class="reportStats" id="statsDeviceSummary"></div>
+
+      <div class="statsHourFilter">
+      <div class="reportStats" id="statsDeviceSummary"></div>
+
+      <div class="statsHourFilter">
+        <label>
+          Od godziny
+          <input id="statsDeviceHourFrom" type="number" min="0" max="23" step="1" value="0">
+        </label>
+        <label>
+          Do godziny
+          <input id="statsDeviceHourTo" type="number" min="0" max="23" step="1" value="23">
+        </label>
+        <button id="statsDeviceHourApplyButton" type="button" class="primary">Filtruj</button>
+        <button id="statsDeviceHourResetButton" type="button">Cała doba</button>
+        <span id="statsDeviceHourInfo" class="muted"></span>
+      </div>
+
+      <div class="statsChartWrap">
+        <canvas id="statsDeviceCanvas" width="1200" height="300"></canvas>
+      </div>
+
+      <div class="reportTableWrap">
+        <table class="reportTable">
+          <thead>
+            <tr><th>Godzina</th><th>Status</th><th>Opóźnienie</th></tr>
+          </thead>
+          <tbody id="statsDeviceTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div id="toastContainer" class="toastContainer"></div>
+
+  <script type="module" src="/static/js/app.js"></script>
+</body>
+</html>
