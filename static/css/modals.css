@@ -1,0 +1,121 @@
+/* ============================================================
+   modals.css — ogólne modale (hasło, raport — bazowy overlay),
+                toasty
+   ============================================================ */
+
+/* ===== OVERLAY ===== */
+.modalOverlay {
+	position: fixed;
+	inset: 0;
+	background: rgba(15, 20, 26, 0.55);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	z-index: 1000;
+	padding: 16px;
+}
+
+.modalOverlay.hidden {
+	display: none;
+}
+
+/* ===== BOX ===== */
+.modalBox {
+	background: var(--bg-surface);
+	border: 1px solid var(--border-color);
+	border-radius: 10px;
+	padding: 20px;
+	width: min(360px, 100%);
+	box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+}
+
+.modalBox.modalBoxLarge {
+	display: block;
+	width: min(1600px, calc(100vw - 32px));
+	max-height: 94vh;
+	overflow-y: auto;
+}
+.modalBoxLarge.statsChartWrap {
+	width: 100%;
+}
+
+.modalBox h3 {
+	margin: 0 0 6px;
+	font-size: 17px;
+}
+
+.modalBox p {
+	margin-bottom: 14px;
+	font-size: 13px;
+}
+
+.modalBox input {
+	width: 100%;
+	margin-bottom: 14px;
+}
+
+.modalActions {
+	display: flex;
+	justify-content: flex-end;
+	gap: 8px;
+}
+
+/* ===== TOASTY ===== */
+.toastContainer {
+	position: fixed;
+	bottom: 20px;
+	right: 20px;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	z-index: 1100;
+	max-width: min(360px, calc(100vw - 40px));
+}
+
+.toast {
+	padding: 12px 16px;
+	border-radius: 8px;
+	background: var(--bg-surface);
+	border: 1px solid var(--border-color);
+	color: var(--text-primary);
+	box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+	font-size: 14px;
+	animation: toastIn 0.15s ease-out;
+}
+
+.toast.toastOut {
+	animation: toastOut 0.2s ease-in forwards;
+}
+
+.toast.success {
+	border-color: var(--primary-border);
+	border-left: 4px solid var(--primary-bg);
+}
+
+.toast.error {
+	border-color: var(--danger-border);
+	border-left: 4px solid var(--danger-text);
+}
+
+@keyframes toastIn {
+	from {
+		opacity: 0;
+		transform: translateY(10px);
+	}
+
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+@keyframes toastOut {
+	from {
+		opacity: 1;
+	}
+
+	to {
+		opacity: 0;
+		transform: translateY(-6px);
+	}
+}
