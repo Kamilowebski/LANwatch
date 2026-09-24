@@ -1,0 +1,473 @@
+/* ============================================================
+   watchdog.css — zakładka Watchdog: formularz dodawania,
+                   toolbar, karty obserwowanych maszyn,
+                   modal raportu (statystyki, canvas, tabela pingów)
+   ============================================================ */
+
+/* ===== NAGŁÓWEK / FORMULARZ DODAWANIA ===== */
+.watchdogAddHeader {
+	margin-bottom: 10px;
+}
+
+.watchdogAddToggle {
+	width: 100%;
+	text-align: left;
+	background: var(--bg-surface-alt);
+	border: 1px dashed var(--border-color);
+	color: var(--text-secondary);
+	font-weight: 700;
+	min-height: 40px;
+	padding: 8px 14px;
+}
+
+.watchdogAddToggle:hover {
+	background: var(--button-hover-bg);
+	color: var(--text-primary);
+}
+
+.watchdogAddBox {
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: 10px;
+	padding: 12px;
+	margin-bottom: 14px;
+	border: 1px solid var(--border-color-light);
+	border-radius: 8px;
+	background: var(--bg-surface-alt);
+}
+
+.watchdogAddBox.collapsed {
+	display: none;
+}
+
+.watchdogAddActions {
+	display: flex;
+	gap: 8px;
+	flex-wrap: wrap;
+}
+
+/* ===== TOOLBAR (toggle aktywności, dźwięk, historia) ===== */
+.watchdogToolbar {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: 10px;
+	margin-bottom: 14px;
+	padding-bottom: 12px;
+	border-bottom: 1px solid var(--border-color-light);
+}
+
+.watchdogToolbarLeft {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 10px;
+}
+
+.wdHistoryLabel {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	font-size: 13px;
+}
+
+.wdHistoryLabel input {
+	min-height: 32px;
+	width: 90px;
+	padding: 4px 8px;
+}
+
+/* ===== LISTA KART MASZYN ===== */
+.watchdogCards {
+	display: grid;
+	gap: 10px;
+	max-height: 60vh;
+	overflow-y: auto;
+	padding-right: 4px;
+}
+
+.wdCard {
+	border: 1px solid var(--border-color);
+	border-radius: 8px;
+	background: var(--bg-surface-alt);
+	padding: 12px;
+	display: grid;
+	gap: 8px;
+}
+
+.wdCard.status-online {
+	border-left: 5px solid var(--status-online);
+}
+
+.wdCard.status-offline {
+	border-left: 5px solid var(--status-offline);
+}
+
+.wdCard.status-timeout {
+	border-left: 5px solid var(--status-checking);
+}
+
+.wdCard.status-unknown {
+	border-left: 5px solid var(--status-unknown);
+}
+
+.wdCardHeader {
+	display: flex;
+	justify-content: space-between;
+	align-items: flex-start;
+	gap: 10px;
+	flex-wrap: wrap;
+}
+
+.wdCardTitle {
+	display: grid;
+	gap: 2px;
+}
+
+.wdCardName {
+	font-size: 15px;
+	font-weight: 700;
+	color: var(--text-primary);
+}
+
+.wdCardHost {
+	font-size: 12px;
+	font-family: Consolas, monospace;
+	color: var(--text-muted);
+}
+
+.wdCardMeta {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	font-size: 12px;
+	color: var(--text-muted);
+	white-space: nowrap;
+}
+
+.wdCardMeta button {
+	min-height: 30px;
+	padding: 4px 10px;
+	font-size: 12px;
+}
+
+.wdCardMeta button.wdReportButton {
+	border-color: var(--primary-border);
+	background: var(--bg-surface);
+	color: var(--primary-bg);
+}
+
+.wdCardMeta button.wdReportButton:hover {
+	background: var(--primary-bg);
+	color: var(--primary-text);
+}
+
+/* ===== STATUS NA KARCIE ===== */
+.wdCardStatus {
+	font-size: 14px;
+	font-weight: 700;
+	letter-spacing: 0.02em;
+}
+
+.wdCardStatus.online {
+	color: var(--status-online);
+}
+
+.wdCardStatus.offline {
+	color: var(--status-offline);
+}
+
+.wdCardStatus.timeout {
+	color: var(--status-checking);
+}
+
+.wdCardStatus.unknown {
+	color: var(--status-unknown);
+}
+
+.wdCardStatus .lastMs {
+	font-weight: 400;
+	color: var(--text-secondary);
+	font-size: 13px;
+	margin-left: 6px;
+}
+
+/* ===== PLAKIETKI OSTATNICH 5 PINGÓW ===== */
+.wdPings {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+	align-items: center;
+}
+
+.wdPingsLabel {
+	font-size: 12px;
+	color: var(--text-muted);
+	margin-right: 4px;
+}
+
+.wdPing {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 56px;
+	padding: 4px 8px;
+	border-radius: 6px;
+	font-size: 12px;
+	font-weight: 700;
+	font-family: Consolas, monospace;
+	color: #fff;
+}
+
+.wdPing.online {
+	background: var(--status-online);
+}
+
+.wdPing.offline {
+	background: var(--status-offline);
+}
+
+.wdPing.timeout {
+	background: var(--status-checking);
+	color: #2b2413;
+}
+
+.wdPing.empty {
+	background: var(--chip-bg);
+	color: var(--text-faint);
+	font-weight: 400;
+	font-style: italic;
+}
+
+/* ===== MODAL RAPORTU ===== */
+.modalBoxLarge {
+	width: min(1600px, calc(100vw - 32px));
+	max-height: 94vh;
+	overflow-y: auto;
+}
+
+.reportHeader {
+	display: flex;
+	justify-content: space-between;
+	align-items: flex-start;
+	gap: 12px;
+	margin-bottom: 14px;
+	padding-bottom: 10px;
+	border-bottom: 1px solid var(--border-color-light);
+}
+
+.reportHeader h3 {
+	margin: 0 0 4px;
+	font-size: 18px;
+}
+
+.reportRangeButtons {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+	margin-bottom: 14px;
+}
+
+.reportRangeButtons button.active {
+	background: var(--primary-bg);
+	color: var(--primary-text);
+	border-color: var(--primary-border);
+}
+
+/* ===== STATYSTYKI ===== */
+.reportStats {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+	gap: 10px;
+	margin-bottom: 16px;
+}
+
+.reportStatCard {
+	border: 1px solid var(--border-color);
+	border-radius: 8px;
+	padding: 10px 12px;
+	background: var(--bg-surface-alt);
+}
+
+.reportStatCard .statLabel {
+	font-size: 11px;
+	text-transform: uppercase;
+	color: var(--text-faint);
+	letter-spacing: 0.04em;
+	display: block;
+	margin-bottom: 3px;
+}
+
+.reportStatCard .statValue {
+	font-size: 20px;
+	font-weight: 700;
+	color: var(--text-primary);
+}
+
+.reportStatCard .statValue.bad {
+	color: var(--status-offline);
+}
+
+.reportStatCard .statValue.good {
+	color: var(--status-online);
+}
+
+/* ===== WYKRES ===== */
+.reportChartWrap {
+	border: 1px solid var(--border-color-light);
+	border-radius: 8px;
+	background: var(--bg-surface-alt);
+	padding: 10px;
+	margin-bottom: 16px;
+}
+
+#reportCanvas {
+	width: 100%;
+	height: 300px;
+	display: block;
+}
+
+.reportChartLegend {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 14px;
+	margin-top: 8px;
+	font-size: 12px;
+	color: var(--text-muted);
+}
+
+.legendBox {
+	display: inline-block;
+	width: 12px;
+	height: 12px;
+	border-radius: 2px;
+	margin-right: 4px;
+	vertical-align: middle;
+}
+
+.reportChartLegend .legendBox.online {
+	background: var(--status-online);
+}
+
+.reportChartLegend .legendBox.offline {
+	background: var(--status-offline);
+}
+
+.reportChartLegend .legendBox.timeout {
+	background: var(--status-checking);
+}
+
+/* ===== TABELA PINGÓW W RAPORCIE ===== */
+.reportTableHeading {
+	margin: 0 0 8px;
+	font-size: 14px;
+	color: var(--text-secondary);
+}
+
+.reportTableWrap {
+	max-height: 340px;
+	overflow-y: auto;
+	border: 1px solid var(--border-color-light);
+	border-radius: 8px;
+	width: 100%;
+}
+
+.reportTable {
+	width: 100%;
+	border-collapse: collapse;
+	min-width: 0;
+}
+
+.reportTable th,
+.reportTable td {
+	padding: 8px 10px;
+	border-bottom: 1px solid var(--border-color-light);
+	font-size: 13px;
+	text-align: left;
+}
+
+.reportTable th {
+	background: var(--th-bg);
+	text-transform: uppercase;
+	font-size: 11px;
+	color: var(--text-muted);
+	position: sticky;
+	top: 0;
+	z-index: 1;
+}
+
+.reportTable td.statusCell.online {
+	color: var(--status-online);
+	font-weight: 700;
+}
+
+.reportTable td.statusCell.offline {
+	color: var(--status-offline);
+	font-weight: 700;
+}
+
+.reportTable td.statusCell.timeout {
+	color: var(--status-checking);
+	font-weight: 700;
+}
+
+.reportTable td.timeCell {
+	font-family: Consolas, monospace;
+	color: var(--text-secondary);
+	white-space: nowrap;
+}
+
+.reportTable td.msCell {
+	font-family: Consolas, monospace;
+}
+
+/* ===== ZWIJANE USTAWIENIA WATCHDOGA ===== */
+.watchdogSettingsHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.watchdogSettingsToggle {
+  flex: 1;
+  text-align: left;
+  background: var(--bg-surface-alt);
+  border: 1px dashed var(--border-color);
+  color: var(--text-secondary);
+  font-weight: 700;
+  min-height: 40px;
+  padding: 8px 14px;
+}
+
+.watchdogSettingsToggle:hover {
+  background: var(--button-hover-bg);
+  color: var(--text-primary);
+}
+
+.watchdogToolbar.collapsed {
+  display: none;
+}
+
+.watchdogStatusBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.watchdogStatusBadge.active {
+  background: var(--status-online);
+  color: #fff;
+}
+
+.watchdogStatusBadge.inactive {
+  background: var(--chip-bg);
+  color: var(--text-muted);
+}
