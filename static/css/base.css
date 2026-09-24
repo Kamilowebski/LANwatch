@@ -1,0 +1,283 @@
+/* ============================================================
+   base.css — zmienne, reset, layout główny, topbar, sticky search
+   ============================================================ */
+
+:root {
+	--bg-page: #f4f7f9;
+	--bg-surface: #ffffff;
+	--bg-surface-alt: #f8fafc;
+	--bg-row-hover: #f5f8fa;
+	--text-primary: #1f2937;
+	--text-secondary: #526170;
+	--text-muted: #718091;
+	--text-faint: #90a0af;
+	--border-color: #d7dee6;
+	--border-color-light: #edf1f5;
+	--input-border: #c7d0da;
+	--primary-border: #126b54;
+	--primary-bg: #158266;
+	--primary-bg-hover: #126b54;
+	--primary-text: #ffffff;
+	--danger-border: #d99b9b;
+	--danger-text: #9d2727;
+	--danger-bg-hover: #fff0f0;
+	--chip-bg: #e8eef3;
+	--chip-text: #394756;
+	--status-online: #158266;
+	--status-offline: #bd2f2f;
+	--status-checking: #c98318;
+	--status-unknown: #9aa8b5;
+	--button-hover-bg: #eef3f7;
+	--th-bg: #f8fafc;
+	--detail-value: #334155;
+}
+
+html.theme-dark {
+	--bg-page: #1b212a;
+	--bg-surface: #242c36;
+	--bg-surface-alt: #2b3440;
+	--bg-row-hover: #313b48;
+	--text-primary: #eef2f6;
+	--text-secondary: #b8c4d0;
+	--text-muted: #9baab8;
+	--text-faint: #84939f;
+	--border-color: #3d4854;
+	--border-color-light: #333e4a;
+	--input-border: #4a5663;
+	--primary-border: #24a583;
+	--primary-bg: #1f9878;
+	--primary-bg-hover: #29b491;
+	--primary-text: #ffffff;
+	--danger-border: #8a4444;
+	--danger-text: #f3aeae;
+	--danger-bg-hover: #3f2626;
+	--chip-bg: #313c49;
+	--chip-text: #cbd6e1;
+	--status-online: #34c99e;
+	--status-offline: #e5766f;
+	--status-checking: #e5b652;
+	--status-unknown: #7c8b99;
+	--button-hover-bg: #313b48;
+	--th-bg: #2b3440;
+	--detail-value: #cbd6e1;
+}
+
+* {
+	box-sizing: border-box;
+}
+
+body {
+	margin: 0;
+	color: var(--text-primary);
+	background: var(--bg-page);
+	font-family: Arial, Helvetica, sans-serif;
+	transition: background 0.15s ease, color 0.15s ease;
+}
+
+.app {
+	width: min(1600px, calc(100% - 32px));
+	margin: 0 auto;
+	padding: 28px 0;
+}
+
+/* ===== TOPBAR ===== */
+.topbar {
+	display: flex;
+	justify-content: space-between;
+	gap: 16px;
+	align-items: center;
+	padding-bottom: 16px;
+	border-bottom: 1px solid var(--border-color);
+}
+
+.topActions {
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+
+h1 {
+	margin: 0 0 6px;
+	font-size: 28px;
+}
+
+h2 {
+	margin: 0 0 8px;
+	font-size: 18px;
+}
+
+h3 {
+	margin: 0 0 8px;
+	font-size: 15px;
+}
+
+h4 {
+	margin: 0 0 8px;
+	font-size: 14px;
+}
+
+p {
+	margin: 0;
+	color: var(--text-secondary);
+}
+
+/* ===== PRZYCISKI / INPUTY (globalne) ===== */
+button,
+select,
+input {
+	font: inherit;
+}
+
+button {
+	min-height: 38px;
+	border: 1px solid var(--input-border);
+	border-radius: 7px;
+	background: var(--bg-surface);
+	color: var(--text-primary);
+	padding: 8px 12px;
+	cursor: pointer;
+}
+
+button:hover {
+	background: var(--button-hover-bg);
+}
+
+.themeToggle {
+	min-height: 38px;
+	min-width: 38px;
+	border-radius: 7px;
+	font-size: 17px;
+	line-height: 1;
+	padding: 8px 10px;
+}
+
+.danger {
+	border-color: var(--danger-border);
+	color: var(--danger-text);
+}
+
+.danger:hover {
+	background: var(--danger-bg-hover);
+}
+
+.primary {
+	border-color: var(--primary-border);
+	background: var(--primary-bg);
+	color: var(--primary-text);
+}
+
+.primary:hover {
+	background: var(--primary-bg-hover);
+}
+
+.linkButton {
+	border: none;
+	background: none;
+	color: var(--text-muted);
+	text-decoration: underline;
+	min-height: auto;
+	padding: 4px 2px;
+}
+
+.linkButton:hover {
+	background: none;
+	color: var(--text-primary);
+}
+
+input,
+select {
+	min-height: 42px;
+	border: 1px solid var(--input-border);
+	border-radius: 7px;
+	padding: 8px 11px;
+	background: var(--bg-surface);
+	color: var(--text-primary);
+}
+
+label {
+	display: grid;
+	gap: 5px;
+	color: var(--text-secondary);
+	font-size: 13px;
+}
+
+/* ===== STICKY SEARCH ===== */
+.stickySearch {
+	position: sticky;
+	top: 0;
+	z-index: 50;
+	padding: 12px 0;
+	background: var(--bg-page);
+	border-bottom: 1px solid var(--border-color-light);
+	margin-bottom: 16px;
+}
+
+.stickySearch #searchInput {
+	width: 100%;
+	min-height: 46px;
+	font-size: 15px;
+}
+
+/* ===== LAYOUT 2-KOLUMNOWY ===== */
+.layout {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) minmax(360px, 480px);
+	gap: 20px;
+	align-items: start;
+}
+
+.leftColumn {
+	min-width: 0;
+}
+
+.rightColumn {
+	position: sticky;
+	top: 78px;
+	max-height: calc(100vh - 96px);
+	overflow-y: auto;
+	border: 1px solid var(--border-color);
+	border-radius: 8px;
+	background: var(--bg-surface);
+	padding: 12px;
+}
+
+/* ===== UTIL ===== */
+.hidden {
+	display: none;
+}
+
+.muted {
+	color: var(--text-muted);
+}
+
+.copyable {
+	cursor: text;
+	user-select: text;
+	-webkit-user-select: text;
+}
+
+.copyable::selection,
+.copyable *::selection {
+	background: var(--primary-bg);
+	color: var(--primary-text);
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 1100px) {
+	.layout {
+		grid-template-columns: 1fr;
+	}
+
+	.rightColumn {
+		position: static;
+		max-height: none;
+	}
+}
+
+@media (max-width: 760px) {
+	.topbar {
+		display: grid;
+	}
+}
