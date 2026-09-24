@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dashboard — Panel urządzeń</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>">
+  <meta name="theme-color" content="#0f151b">
+
+  <link rel="stylesheet" href="/static/css/base.css">
+  <link rel="stylesheet" href="/static/css/dashboard.css">
+</head>
+<body class="dashboard-body">
+  <header class="dash-topbar">
+    <div class="dash-topbar-left">
+      <h1 class="dash-title">Dashboard</h1>
+      <span id="dashClock" class="dash-clock">--:--:--</span>
+      <span id="dashDate" class="dash-date"></span>
+    </div>
+    <div class="dash-topbar-center" id="dashCounters"></div>
+    <div class="dash-topbar-right">
+      <span id="dashRefreshInfo" class="dash-refresh-info"></span>
+      <button id="dashFullscreenButton" class="dash-icon-button" type="button" title="Pełny ekran">⛶</button>
+      <button id="dashSettingsButton" class="dash-icon-button" type="button" title="Ustawienia">⚙</button>
+    </div>
+  </header>
+
+  <main class="dash-main">
+    <section class="dash-grid" id="dashGrid"></section>
+  </main>
+
+  <aside class="dash-problems hidden" id="dashProblems">
+    <div class="dash-problems-header">
+      <h2>⚠ Problemy</h2>
+      <button id="dashProblemsClose" class="dash-icon-button" type="button">×</button>
+    </div>
+    <ul id="dashProblemsList" class="dash-problems-list"></ul>
+  </aside>
+
+  <aside class="dash-settings hidden" id="dashSettings">
+    <div class="dash-settings-header">
+      <h2>Ustawienia</h2>
+      <button id="dashSettingsClose" class="dash-icon-button" type="button">×</button>
+    </div>
+    <div class="dash-settings-body">
+      <div class="dash-settings-group">
+        <label class="dash-settings-label">Typy urządzeń do wyświetlania</label>
+        <p class="dash-settings-hint">Puste = wszystkie typy. Zaznacz konkretne, żeby pokazać tylko je.</p>
+        <div id="dashTypesList" class="dash-types-list"></div>
+      </div>
+
+      <div class="dash-settings-group">
+        <label for="dashRefreshInterval" class="dash-settings-label">Częstotliwość odświeżania</label>
+        <select id="dashRefreshInterval">
+          <option value="10000">10 sekund</option>
+          <option value="15000">15 sekund</option>
+          <option value="30000" selected>30 sekund</option>
+          <option value="60000">1 minuta</option>
+          <option value="300000">5 minut</option>
+          <option value="0">Wyłączone (ręczne)</option>
+        </select>
+      </div>
+
+      <div class="dash-settings-group">
+        <label class="dash-toggle-label">
+          <input type="checkbox" id="dashShowProblems" checked>
+          Pokazuj panel problemów
+        </label>
+        <label class="dash-toggle-label">
+          <input type="checkbox" id="dashShowLatency" checked>
+          Pokazuj opóźnienie (ms)
+        </label>
+        <label class="dash-toggle-label">
+          <input type="checkbox" id="dashCompactMode">
+          Tryb kompaktowy (więcej kart na ekranie)
+        </label>
+        <label class="dash-toggle-label">
+          <input type="checkbox" id="dashDarkMode" checked>
+          Ciemny motyw
+        </label>
+      </div>
+
+      <div class="dash-settings-actions">
+        <button id="dashRefreshNowButton" type="button" class="primary">Odśwież teraz</button>
+        <button id="dashSettingsResetButton" type="button">Reset ustawień</button>
+      </div>
+    </div>
+  </aside>
+
+  <div id="dashToastContainer" class="toastContainer"></div>
+
+  <script type="module" src="/static/js/dashboard.js"></script>
+</body>
+</html>
