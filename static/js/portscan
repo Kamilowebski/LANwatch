@@ -1,0 +1,117 @@
+/* ============================================================
+   portscan.js — skan portów TCP na pojedynczym hoście
+   ============================================================ */
+
+import {
+  portScanHostInput,
+  startPortScanButton,
+  portScanStatus,
+  portScanResults,
+  escapeHtml,
+  addHistoryEntry,
+  showToast,
+} from "./core.js";
+
+import { getAdminPassword, clearStoredPassword } from "./api.js";
+
+const DEFAULT_PORTS = [
+  { port: 22, label: "SSH" },
+  { port: 23, label: "Telnet" },
+  { port: 80, label: "HTTP" },
+  { port: 161, label: "SNMP" },
+  { port: 443, label: "HTTPS" },
+  { port: 515, label: "LPD (drukarka)" },
+  { port: 631, label: "IPP (drukarka)" },
+  { port: 3389, label: "RDP" },
+  { port: 5900, label: "VNC" },
+  { port: 5901, label: "VNC :1" },
+  { port: 8080, label: "HTTP alt" },
+  { port: 8443, label: "HTTPS alt" },
+  { port: 9100, label: "JetDirect (drukarka)" },
+];
+
+export function initPortScan() {
+  if (startPortScanButton) {
+    startPortScanButton.addEventListener("click", startPortScan);
+  }
+  if (portScanHostInput) {
+    portScanHostInput.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        startPortScan();
+      }
+    });
+  }
+}
+
+async function startPortScan() {
+  const host = portScanHostInput.value.trim();
+  if (!host) {
+    portScanStatus.textContent = "Wpisz host / IP.";
+    return;
+  }
+
+  const password = await getAdminPassword();
+  if (!password) return;
+
+  startPortScanButton.disabled = true;
+  portScanResults.innerHTML = "";
+  portScanStatus.textContent = "Skanowanie portów w toku…";
+
+  const ports = DEFAULT_PORTS.map((p) => p.port);
+
+  try {
+    const response = await fetch("/api/port-scan", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-Admin-Password": password },
+      body: JSON.stringify({ host, ports }),
+    });
+    const result = await response.json();
+
+    if (!response.ok) {
+      if (response.status === 403) clearStoredPassword();
+      portScanStatus.textContent = result.error || "Nie udało się przeskanować portów.";
+      return;
+    }
+
+    renderPortResults(host, result.results);
+  } catch (error) {
+    portScanStatus.textContent = `Błąd skanowania: ${error.message}`;
+  } finally {
+    startPortScanButton.disabled = false;
+  }
+}
+
+function renderPortResults(host, results) {
+  const rows = DEFAULT_PORTS.map(({ port, label }) => {
+    const status = results[port] || "error";
+    let statusText, statusClass;
+    if (status === "open") { statusText = "OTWARTY"; statusClass = "statusOpen"; }
+    else if (status === "closed") { statusText = "zamknięty"; statusClass = "statusClosed"; }
+    else if (status === "filtered") { statusText = "filtrowany"; statusClass = "statusFiltered"; }
+    else { statusText = "błąd"; statusClass = "statusFiltered"; }
+
+    return `
+      <tr>
+        <td class="portCell">${port}</td>
+        <td>${escapeHtml(label)}</td>
+        <td class="${statusClass}">${statusText}</td>
+      </tr>
+    `;
+  }).join("");
+
+  const openCount = Object.values(results).filter((s) => s === "open").length;
+
+  portScanStatus.textContent = `Host ${host}: ${openCount} otwartych z ${DEFAULT_PORTS.length} sprawdzonych.`;
+  portScanResults.innerHTML = `
+    <table class="portScanTable">
+      <thead>
+        <tr><th>Port</th><th>Usługa</th><th>Status</th></tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
+
+  addHistoryEntry(`Skan portów: ${host} — ${openCount} otwartych z ${DEFAULT_PORTS.length}.`, "info");
+  if (openCount > 0) showToast(`Skan portów ${host}: ${openCount} otwartych.`, "success");
+}
