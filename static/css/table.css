@@ -1,0 +1,991 @@
+/* ============================================================
+   table.css — tabela główna, wiersze, rozwinięte szczegóły,
+               statusy, tagi, akcje w wierszu,
+               przełącznik widoku, widok kart, zależności,
+               skan portów, ulubione, traceroute.
+   ============================================================ */
+
+.tableWrap {
+  overflow: auto;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--bg-surface);
+}
+
+.tableWrap.hidden {
+  display: none;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+#devicesTable {
+  min-width: 640px;
+}
+
+.reportTable {
+  min-width: 0;
+}
+
+.portScanTable {
+  min-width: 0;
+}
+
+th,
+td {
+  padding: 12px;
+  border-bottom: 1px solid var(--border-color-light);
+  text-align: left;
+  vertical-align: middle;
+}
+
+th {
+  font-size: 12px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  background: var(--th-bg);
+}
+
+/* ===== KOLUMNA ZAZNACZANIA ===== */
+.selectCell {
+  width: 36px;
+  text-align: center;
+}
+
+.selectCell input[type="checkbox"],
+.rowCheckbox {
+  min-height: auto;
+  width: 17px;
+  height: 17px;
+  cursor: pointer;
+}
+
+#devicesTable.hideSelectColumn .selectCell {
+  display: none;
+}
+
+/* ===== KOLUMNA ULUBIONYCH ===== */
+.favCell {
+  width: 36px;
+  text-align: center;
+  padding-left: 6px;
+  padding-right: 6px;
+}
+
+.favButton {
+  min-height: 28px;
+  width: 28px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--text-faint);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: color 0.15s ease, transform 0.15s ease;
+}
+
+.favButton:hover {
+  background: var(--button-hover-bg);
+  color: var(--status-checking);
+  transform: scale(1.1);
+}
+
+.favButton.active {
+  color: #e6a700;
+}
+
+[data-theme="dark"] .favButton.active,
+html.theme-dark .favButton.active {
+  color: #f0b429;
+}
+
+/* ===== STATUS ===== */
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-weight: 700;
+}
+
+.status .dot {
+  display: inline-block;
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--status-unknown);
+}
+
+.online .dot { background: var(--status-online); }
+.offline .dot { background: var(--status-offline); }
+.checking .dot { background: var(--status-checking); }
+
+.status.stale .dot {
+  opacity: 0.35;
+}
+
+.status.stale {
+  filter: grayscale(0.5);
+}
+
+/* ===== IKONA OSTRZEŻENIA ZALEŻNOŚCI ===== */
+.depWarnIcon {
+  display: inline-block;
+  margin-left: 6px;
+  color: var(--status-checking);
+  font-size: 14px;
+  cursor: help;
+}
+
+/* ===== TAGI ===== */
+.tag {
+  display: inline-block;
+  margin: 2px 4px 2px 0;
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: var(--chip-bg);
+  color: var(--chip-text);
+  font-size: 12px;
+}
+
+/* ===== WIERSZ GŁÓWNY ===== */
+.deviceRow {
+  cursor: pointer;
+}
+
+.deviceRow:hover {
+  background: var(--bg-row-hover);
+}
+
+.expandArrow {
+  display: inline-block;
+  width: 12px;
+  margin-right: 4px;
+  color: var(--text-faint);
+  transition: transform 0.15s ease;
+}
+
+.expandArrow.open {
+  transform: rotate(90deg);
+}
+
+.rowActions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  min-width: 130px;
+}
+
+/* ===== ROZWINIĘTE SZCZEGÓŁY ===== */
+.deviceDetail td {
+  background: var(--bg-surface-alt);
+  padding: 14px 16px;
+}
+
+.detailActions {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.httpsButton {
+  display: inline-flex;
+  align-items: center;
+  min-height: 38px;
+  padding: 8px 12px;
+  border: 1px solid var(--input-border);
+  border-radius: 7px;
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.httpsButton:hover {
+  background: var(--button-hover-bg);
+}
+
+/* ===== POWIĄZANE URZĄDZENIA ===== */
+.relatedDevices {
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-color-light);
+}
+
+.relatedDevices .detailLabel {
+  display: block;
+  margin-bottom: 6px;
+}
+
+.relatedChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.relatedChip {
+  min-height: 30px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--chip-bg);
+  color: var(--chip-text);
+  border: 1px solid var(--border-color);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.relatedChip:hover {
+  background: var(--primary-bg);
+  color: var(--primary-text);
+  border-color: var(--primary-border);
+}
+
+/* ===== GRID SZCZEGÓŁÓW ===== */
+.detailGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+}
+
+.detailItem {
+  display: grid;
+  gap: 3px;
+}
+
+.detailKeywords {
+  grid-column: 1 / -1;
+}
+
+.detailLabel {
+  font-size: 11px;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  letter-spacing: 0.03em;
+}
+
+.detailValue {
+  color: var(--detail-value);
+  font-size: 14px;
+}
+
+/* ===== PRZEŁĄCZNIK WIDOKU ===== */
+.viewToggle {
+  display: inline-flex;
+  border: 1px solid var(--input-border);
+  border-radius: 7px;
+  overflow: hidden;
+}
+
+.viewToggle button {
+  border: none;
+  border-radius: 0;
+  min-height: 38px;
+  padding: 8px 12px;
+  font-size: 16px;
+  background: var(--bg-surface);
+}
+
+.viewToggle button.active {
+  background: var(--primary-bg);
+  color: var(--primary-text);
+}
+
+/* ===== WIDOK KART ===== */
+.cardsWrap {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+  margin-bottom: 14px;
+  align-items: start;
+}
+
+.cardsWrap.hidden {
+  display: none;
+}
+
+.deviceCard {
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  background: var(--bg-surface);
+  padding: 14px;
+  cursor: pointer;
+  transition: box-shadow 0.15s ease, transform 0.15s ease;
+  border-top: 4px solid var(--status-unknown);
+  display: grid;
+  gap: 8px;
+  position: relative;
+}
+
+.deviceCard:hover {
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+  transform: translateY(-1px);
+}
+
+.deviceCard.status-online { border-top-color: var(--status-online); }
+.deviceCard.status-offline { border-top-color: var(--status-offline); }
+.deviceCard.status-checking { border-top-color: var(--status-checking); }
+.deviceCard.status-stale { border-top-color: var(--status-unknown); }
+
+.deviceCard.hasDepIssue {
+  box-shadow: 0 0 0 2px var(--status-checking) inset;
+}
+
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.cardName {
+  font-size: 16px;
+  font-weight: 700;
+  word-break: break-all;
+}
+
+.cardStatusDot {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  background: var(--status-unknown);
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+
+.deviceCard.status-online .cardStatusDot { background: var(--status-online); }
+.deviceCard.status-offline .cardStatusDot { background: var(--status-offline); }
+.deviceCard.status-checking .cardStatusDot { background: var(--status-checking); }
+
+.cardHost {
+  font-family: Consolas, monospace;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.cardTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.cardTag {
+  font-size: 11px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: var(--chip-bg);
+  color: var(--chip-text);
+}
+
+.cardStatusLabel {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.cardStatusLabel.online { color: var(--status-online); }
+.cardStatusLabel.offline { color: var(--status-offline); }
+.cardStatusLabel.checking { color: var(--status-checking); }
+.cardStatusLabel.unknown { color: var(--status-unknown); }
+
+.cardDepWarning {
+  font-size: 12px;
+  color: var(--status-checking);
+  font-weight: 700;
+}
+
+.cardActions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.cardActions button {
+  min-height: 32px;
+  padding: 4px 10px;
+  font-size: 12px;
+}
+
+.cardCheckbox {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  display: none;
+}
+
+.cardsWrap.showCheckboxes .cardCheckbox {
+  display: block;
+}
+
+.cardFavButton {
+  position: absolute;
+  top: 6px;
+  right: 32px;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--text-faint);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: color 0.15s ease, transform 0.15s ease;
+}
+
+.cardFavButton:hover {
+  color: var(--status-checking);
+  transform: scale(1.15);
+  background: var(--button-hover-bg);
+}
+
+.cardFavButton.active {
+  color: #e6a700;
+}
+
+.cardsWrap.showCheckboxes .cardFavButton {
+  right: 32px;
+}
+
+.cardsWrap:not(.showCheckboxes) .cardFavButton {
+  right: 8px;
+}
+
+.cardDetail {
+  border-top: 1px solid var(--border-color-light);
+  margin-top: 6px;
+  padding-top: 10px;
+  display: grid;
+  gap: 6px;
+  font-size: 13px;
+}
+
+.cardDetailRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.cardDetailRow .detailLabel {
+  font-size: 11px;
+  color: var(--text-faint);
+}
+
+.cardDetailRow .detailValue {
+  color: var(--detail-value);
+  text-align: right;
+}
+
+/* ===== ZALEŻNOŚCI (multi-select w formularzu) ===== */
+.fullWidthLabel {
+  grid-column: 1 / -1;
+}
+
+.depsPicker {
+  border: 1px solid var(--input-border);
+  border-radius: 7px;
+  padding: 8px;
+  background: var(--bg-surface);
+  display: grid;
+  gap: 6px;
+}
+
+.depsPicker input {
+  min-height: 34px;
+  font-size: 13px;
+}
+
+.depsList {
+  max-height: 140px;
+  overflow-y: auto;
+  border: 1px solid var(--border-color-light);
+  border-radius: 6px;
+  padding: 4px;
+  background: var(--bg-surface-alt);
+  display: grid;
+  gap: 2px;
+}
+
+.depsList:empty::after {
+  content: "Brak urządzeń";
+  color: var(--text-faint);
+  font-size: 12px;
+  padding: 6px;
+  font-style: italic;
+}
+
+.depsListItem {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px;
+  border-radius: 4px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.depsListItem:hover {
+  background: var(--button-hover-bg);
+}
+
+.depsListItem input[type="checkbox"] {
+  min-height: auto;
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+}
+
+.depsSelected {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.depsSelected:empty::after {
+  content: "Nic nie wybrano";
+  color: var(--text-faint);
+  font-size: 12px;
+  font-style: italic;
+}
+
+.depChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: var(--chip-bg);
+  color: var(--chip-text);
+  font-size: 12px;
+}
+
+.depChip button {
+  min-height: 18px;
+  width: 18px;
+  padding: 0;
+  border-radius: 999px;
+  font-size: 12px;
+  line-height: 1;
+}
+
+/* ===== SKAN PORTÓW ===== */
+.portScanHeading {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border-color-light);
+}
+
+#portScanStatus {
+  margin-bottom: 10px;
+  font-size: 13px;
+  min-height: 18px;
+}
+
+.portScanTable {
+  width: 100%;
+  max-width: 360px;
+  border-collapse: collapse;
+  border: 1px solid var(--border-color-light);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.portScanTable th,
+.portScanTable td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border-color-light);
+  font-size: 13px;
+  text-align: left;
+}
+
+.portScanTable th {
+  background: var(--th-bg);
+  font-size: 11px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.portScanTable tr:last-child td {
+  border-bottom: none;
+}
+
+.portScanTable .portCell {
+  font-family: Consolas, monospace;
+  font-weight: 700;
+}
+
+.portScanTable .statusOpen {
+  color: var(--status-online);
+  font-weight: 700;
+}
+
+.portScanTable .statusClosed {
+  color: var(--text-muted);
+}
+
+.portScanTable .statusFiltered {
+  color: var(--status-checking);
+}
+
+/* ===== TRACEROUTE — MODAL ===== */
+.modalBoxMedium {
+  width: min(700px, 100%);
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+#tracerouteStatus {
+  margin-bottom: 12px;
+  font-size: 13px;
+  min-height: 18px;
+}
+
+.tracerouteTable {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid var(--border-color-light);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.tracerouteTable th,
+.tracerouteTable td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border-color-light);
+  font-size: 13px;
+  text-align: left;
+}
+
+.tracerouteTable th {
+  background: var(--th-bg);
+  font-size: 11px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.tracerouteTable tr:last-child td {
+  border-bottom: none;
+}
+
+.tracerouteTable .trHopCell {
+  width: 50px;
+  font-family: Consolas, monospace;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.tracerouteTable .trHostCell {
+  font-family: Consolas, monospace;
+}
+
+.tracerouteTable .trHostCell.trOk {
+  color: var(--status-online);
+}
+
+.tracerouteTable .trHostCell.trTimeout {
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.tracerouteTable .trMsCell {
+  width: 100px;
+  font-family: Consolas, monospace;
+  text-align: right;
+  color: var(--text-secondary);
+}
+
+/* ============================================================
+   STATYSTYKI — modal, konfiguracja, tabele
+   ============================================================ */
+
+/* ===== KONFIGURACJA STATYSTYK ===== */
+.statsSettings {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border-color-light);
+}
+
+.statsSettings h3 {
+  margin: 0 0 6px;
+  font-size: 15px;
+}
+
+.statsSettings > p {
+  margin-bottom: 10px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.statsSettings code {
+  font-family: Consolas, monospace;
+  font-size: 12px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: var(--chip-bg);
+  color: var(--chip-text);
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.statsActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.statsActions .muted {
+  font-size: 12px;
+}
+
+/* ===== MODAL STATYSTYK ===== */
+.statsControls {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.statsControls > label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.2;
+}
+
+.statsControls > label > input,
+.statsControls > input,
+.statsControls > button {
+  height: 42px;
+  min-height: 42px;
+  max-height: 42px;
+  box-sizing: border-box;
+  padding: 0 12px;
+  font-size: 14px;
+  line-height: 1;
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.statsControls > button {
+  justify-content: center;
+}
+
+.statsControls > label > input[type="date"] {
+  padding: 0 10px;
+  font-family: inherit;
+  line-height: 1.2;
+}
+
+.statsControls > label > input[type="number"] {
+  padding: 0 10px;
+}
+
+/* Filtr godzin w modalu urządzenia */
+.statsHourFilter {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  margin-bottom: 16px;
+  padding: 10px 12px;
+  background: var(--bg-surface-alt);
+  border: 1px solid var(--border-color-light);
+  border-radius: 8px;
+  flex-wrap: wrap;
+}
+
+.statsHourFilter > label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.2;
+}
+
+.statsHourFilter > label > input,
+.statsHourFilter > input,
+.statsHourFilter > button {
+  height: 38px;
+  min-height: 38px;
+  max-height: 38px;
+  box-sizing: border-box;
+  margin: 0;
+  line-height: 1;
+}
+
+.statsHourFilter > label > input[type="number"] {
+  width: 80px;
+  padding: 0 10px;
+}
+
+.statsHourFilter > button {
+  padding: 0 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.statsHourFilter .muted {
+  align-self: center;
+  font-size: 12px;
+  margin-left: auto;
+}
+
+#statsStatus {
+  margin-bottom: 10px;
+  font-size: 13px;
+  min-height: 18px;
+}
+
+.statsContent {
+  display: grid;
+  gap: 16px;
+}
+
+.statsContent.hidden {
+  display: none;
+}
+
+.statsHint {
+  font-size: 12px;
+  margin: -4px 0 8px 0;
+}
+
+.statsChartWrap {
+  width: 100%;
+  border: 1px solid var(--border-color-light);
+  border-radius: 8px;
+  background: var(--bg-surface-alt);
+  padding: 10px;
+  margin-bottom: 16px;
+}
+
+#statsUptimeCanvas,
+#statsLatencyCanvas,
+#statsDeviceCanvas {
+  width: 100%;
+  display: block;
+}
+
+#statsUptimeCanvas { height: 400px; }
+#statsLatencyCanvas { height: 300px; }
+#statsDeviceCanvas { height: 300px; }
+
+.statsTableWrap {
+  max-height: 400px;
+  overflow-y: auto;
+  border: 1px solid var(--border-color-light);
+  border-radius: 8px;
+}
+
+.statsTable {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.statsTable th,
+.statsTable td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border-color-light);
+  font-size: 13px;
+  text-align: left;
+}
+
+.statsTable th {
+  background: var(--th-bg);
+  font-size: 11px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.statsTable tr:last-child td {
+  border-bottom: none;
+}
+
+.statsTable .statsRow {
+  cursor: pointer;
+  transition: background 0.1s ease;
+}
+
+.statsTable .statsRow:hover {
+  background: var(--bg-row-hover);
+}
+
+.statsTable td.bad {
+  color: var(--status-offline);
+  font-weight: 700;
+}
+
+.statsTable td.good {
+  color: var(--status-online);
+  font-weight: 700;
+}
+
+.statsTable td:nth-child(3),
+.statsTable td:nth-child(4),
+.statsTable td:nth-child(6),
+.statsTable td:nth-child(7),
+.statsTable td:nth-child(8) {
+  font-family: Consolas, monospace;
+}
+
+/* ===== PUSTY STAN ===== */
+.statsEmpty {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-muted);
+  font-size: 14px;
+  display: grid;
+  gap: 8px;
+}
+
+.statsEmpty.hidden {
+  display: none;
+}
+
+.statsEmpty .muted {
+  font-size: 13px;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 760px) {
+  .statsControls {
+    display: grid;
+    align-items: stretch;
+  }
+
+  .statsTable th,
+  .statsTable td {
+    padding: 6px 8px;
+    font-size: 12px;
+  }
+
+  #statsUptimeCanvas { height: 300px; }
+  #statsLatencyCanvas { height: 220px; }
+  #statsDeviceCanvas { height: 220px; }
+}
