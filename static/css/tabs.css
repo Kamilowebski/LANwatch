@@ -1,0 +1,37 @@
+/* ============================================================
+   tabs.css — pasek zakładek (akordeon), panele zakładek
+   ============================================================ */
+
+.tabs {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+	padding-bottom: 10px;
+	border-bottom: 1px solid var(--border-color-light);
+	margin-bottom: 12px;
+}
+
+.tabButton {
+	min-height: 34px;
+	padding: 6px 10px;
+	font-size: 13px;
+	border-radius: 7px;
+}
+
+.tabButton.active {
+	background: var(--primary-bg);
+	color: var(--primary-text);
+	border-color: var(--primary-border);
+}
+
+.tabPanels {
+	position: relative;
+}
+
+.tabPanel {
+	display: none;
+}
+
+.tabPanel.active {
+	display: block;
+}vvv
