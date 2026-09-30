@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Rejestr maszyn</title>
+<script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen bg-slate-100 text-slate-800">
+
+<header class="sticky top-0 z-20 border-b border-slate-200 bg-white/90 backdrop-blur">
+  <div class="mx-auto flex max-w-[1600px] flex-wrap items-center gap-2 px-3 py-3">
+    <div class="mr-1 whitespace-nowrap font-bold text-slate-900">⚙️ Rejestr maszyn</div>
+    <input id="q" placeholder="Szukaj: nazwa, IP, lokalizacja, typ, zależności…"
+      class="min-w-[220px] flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none placeholder:text-slate-400 focus:border-sky-500">
+    <select id="loc" class="rounded-lg border border-slate-300 bg-white px-2 py-2 text-sm outline-none focus:border-sky-500"></select>
+    <select id="typ" class="rounded-lg border border-slate-300 bg-white px-2 py-2 text-sm outline-none focus:border-sky-500"></select>
+    <button id="add" class="rounded-lg bg-sky-600 px-3 py-2 text-sm font-medium text-white hover:bg-sky-500">+ Dodaj</button>
+    <button id="view" title="Kafelki / tabela" class="hidden rounded-lg bg-slate-200 px-2.5 py-2 text-sm text-slate-700 hover:bg-slate-300 md:block">▦</button>
+    <button id="exp" title="Eksport JSON" class="rounded-lg bg-slate-200 px-2.5 py-2 text-sm text-slate-700 hover:bg-slate-300">⬇</button>
+    <button id="imp" title="Import JSON" class="rounded-lg bg-slate-200 px-2.5 py-2 text-sm text-slate-700 hover:bg-slate-300">⬆</button>
+    <input type="file" id="file" accept=".json,application/json" class="hidden">
+  </div>
+  <div id="stats" class="mx-auto flex max-w-[1600px] flex-wrap gap-1.5 px-3 pb-2"></div>
+  <div id="count" class="mx-auto max-w-[1600px] px-3 pb-2 text-xs text-slate-500"></div>
+</header>
+
+<main class="mx-auto max-w-[1600px] p-3">
+
+  <!-- WIDOK TABELI -->
+  <div id="tbl" class="hidden overflow-hidden rounded-xl border border-slate-200 bg-white">
+    <table class="w-full table-fixed border-collapse text-sm">
+      <colgroup>
+        <col class="w-[22%]"><col class="w-[8%]"><col class="w-[12%]">
+        <col class="w-[26%]"><col class="w-[22%]"><col class="w-[10%]">
+      </colgroup>
+      <thead class="bg-slate-50 text-left text-xs uppercase tracking-wider text-slate-500">
+        <tr>
+          <th class="px-3 py-2 font-medium">Nazwa</th>
+          <th class="px-3 py-2 font-medium">Typ</th>
+          <th class="px-3 py-2 font-medium">Lokalizacja</th>
+          <th class="px-3 py-2 font-medium">Adresy IP</th>
+          <th class="px-3 py-2 font-medium">Zależności</th>
+          <th class="px-3 py-2 text-right font-medium">Akcje</th>
+        </tr>
+      </thead>
+      <tbody id="rows" class="divide-y divide-slate-200"></tbody>
+    </table>
+  </div>
+
+  <!-- WIDOK KAFELKÓW (domyślny) -->
+  <div id="cards" class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"></div>
+
+  <div id="empty" class="hidden py-16 text-center text-slate-500"></div>
+</main>
+
+<!-- MODAL -->
+<div id="modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40 p-3">
+  <form id="form" class="max-h-[92vh] w-full max-w-lg space-y-3 overflow-auto rounded-2xl border border-slate-200 bg-white p-4 shadow-2xl">
+    <h2 id="mtitle" class="text-lg font-bold text-slate-900"></h2>
+    <input type="hidden" id="fId">
+    <label class="block text-xs text-slate-500">Nazwa hosta *
+      <input id="fName" required class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-sm text-slate-900 outline-none focus:border-sky-500">
+    </label>
+    <div class="grid grid-cols-2 gap-3">
+      <label class="block text-xs text-slate-500">Typ
+        <select id="fType" class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-sm text-slate-900 outline-none focus:border-sky-500"></select>
+      </label>
+      <label class="block text-xs text-slate-500">Lokalizacja
+        <input id="fLoc" list="locList" class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-sm text-slate-900 outline-none focus:border-sky-500">
+      </label>
+    </div>
+    <datalist id="locList"></datalist>
+    <div>
+      <div class="mb-1 flex items-center justify-between text-xs text-slate-500">
+        <span>Adresy IP</span>
+        <button type="button" id="addIp" class="text-sky-600 hover:text-sky-500">+ Dodaj IP</button>
+      </div>
+      <div id="ips" class="space-y-2"></div>
+    </div>
+    <label class="block text-xs text-slate-500">Zależy od (Ctrl/Cmd = wiele)
+      <select id="fDeps" multiple size="4" class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-sm text-slate-900 outline-none focus:border-sky-500"></select>
+    </label>
+    <label class="block text-xs text-slate-500">Notatka
+      <textarea id="fNote" rows="2" class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-sm text-slate-900 outline-none focus:border-sky-500"></textarea>
+    </label>
+    <div class="flex justify-end gap-2 pt-1">
+      <button type="button" id="cancel" class="rounded-lg bg-slate-200 px-3 py-2 text-sm text-slate-700 hover:bg-slate-300">Anuluj</button>
+      <button class="rounded-lg bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-500">Zapisz</button>
+    </div>
+  </form>
+</div>
+
+<div id="toast" class="pointer-events-none fixed bottom-4 left-1/2 z-50 -translate-x-1/2 translate-y-2 rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-white opacity-0 shadow-lg transition-all"></div>
+
+<script>
+const $ = id => document.getElementById(id);
+const TYPES = {
+  pc:['🖥️','Komputer'], printer:['🖨️','Drukarka'], scanner:['📠','Skaner'],
+  camera:['📷','Kamera'], rpi:['🍓','Raspberry Pi'], bizerba:['💼','Bizerba'],
+  metal:['🚨','Detektor metalu'], other:['📦','Inne']
+};
+const T = m => TYPES[m.type] || TYPES.other;
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+/* ---------- STAN ---------- */
+const KEY = 'machines_v1';
+let db = [];
+try { db = JSON.parse(localStorage.getItem(KEY)) || [] } catch(e){}
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(db)) } catch(e){ alert('Brak miejsca w pamięci przeglądarki!') } };
+const uid  = () => crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2) + Date.now();
+
+let view = 'tiles';
+try { view = localStorage.getItem('view') || 'tiles' } catch(e){}
+const open = new Set();
+
+/* ---------- TOAST / KOPIOWANIE ---------- */
+let toastT;
+function toast(msg){
+  const el = $('toast');
+  el.textContent = msg;
+  el.classList.remove('opacity-0','translate-y-2');
+  clearTimeout(toastT);
+  toastT = setTimeout(() => el.classList.add('opacity-0','translate-y-2'), 1500);
+}
+function copy(text){
+  const ok = () => toast('Skopiowano: ' + text);
+  const fb = () => {
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); ok() } catch(e){ toast('Nie udało się skopiować') }
+    ta.remove();
+  };
+  if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(text).then(ok, fb);
+  else fb();
+}
+
+/* ---------- BUDOWA WIERSZA / KARTY ---------- */
+function ipChips(m){
+  const all = (m.ips || []).filter(x => x.ip);
+  const isOpen = open.has(m.id);
+  const chips = (isOpen ? all : all.slice(0,1)).map(i =>
+    `<button data-act="copyip" data-ip="${esc(i.ip)}" title="Kopiuj IP"
+      class="inline-flex max-w-full items-center gap-1 rounded-md bg-slate-100 px-1.5 py-0.5 hover:bg-slate-200">
+      <span class="font-mono text-[12px] text-sky-700">${esc(i.ip)}</span>
+      ${i.label ? `<span class="truncate text-[10px] text-slate-500">${esc(i.label)}</span>` : ''}
+    </button>`).join('');
+  const more = all.length > 1
+    ? `<button data-act="more" data-id="${m.id}" class="rounded-md bg-sky-100 px-1.5 py-0.5 text-[11px] font-medium text-sky-700 hover:bg-sky-200">${isOpen ? '▲ zwiń' : '+' + (all.length - 1)}</button>`
+    : '';
+  return chips + more;
+}
+function depChips(m, M, dir){
+  return (m.deps || [])
+    .map(id => M.get(id))
+    .filter(Boolean)
+    .map(d => `<button data-act="jump" data-id="${d.id}"
+      class="inline-flex items-center gap-1 rounded-md bg-slate-100 px-1.5 py-0.5 text-[11px] text-slate-700 hover:bg-slate-200">
+      <span class="text-slate-400">${dir}</span>${esc(d.name)}
+    </button>`).join('');
+}
+function userChips(m, rev){
+  return (rev[m.id] || []).map(d =>
+    `<button data-act="jump" data-id="${d.id}"
+      class="inline-flex items-center gap-1 rounded-md bg-slate-50 px-1.5 py-0.5 text-[11px] text-slate-500 hover:bg-slate-200">
+      <span class="text-slate-400">➡</span>${esc(d.name)}
+    </button>`).join('');
+}
+
+function row(m, M, rev){
+  const [ico, tn] = T(m);
+  const deps  = depChips(m, M, '⬅');
+  const users = userChips(m, rev);
+  const ips = ipChips(m);
+
+  return `<tr class="group align-top hover:bg-slate-50">
+    <td class="px-3 py-2">
+      <div class="flex items-start gap-2">
+        <span class="text-lg leading-none">${ico}</span>
+        <div class="min-w-0">
+          <button data-act="copy" data-id="${m.id}" title="Kopiuj nazwę"
+            class="block max-w-full truncate text-left font-semibold text-slate-900 hover:text-sky-600">
+            ${esc(m.name)}
+          </button>
+          ${m.note ? `<div class="mt-0.5 truncate text-[11px] text-slate-500" title="${esc(m.note)}">📝 ${esc(m.note)}</div>` : ''}
+        </div>
+      </div>
+    </td>
+    <td class="px-3 py-2 text-slate-600">${tn}</td>
+    <td class="px-3 py-2">
+      ${m.location ? `<span class="rounded bg-slate-100 px-1.5 py-0.5 text-[11px] text-slate-700">📍 ${esc(m.location)}</span>` : '<span class="text-slate-400">—</span>'}
+    </td>
+    <td class="px-3 py-2">
+      <div class="flex flex-wrap gap-1">
+        ${ips || '<span class="text-slate-400">—</span>'}
+      </div>
+    </td>
+    <td class="px-3 py-2">
+      <div class="flex flex-wrap gap-1">
+        ${(deps || users) ? deps + users : '<span class="text-slate-400">—</span>'}
+      </div>
+    </td>
+    <td class="px-3 py-2 text-right whitespace-nowrap">
+      <button data-act="edit" data-id="${m.id}" title="Edytuj" class="rounded p-1 text-slate-500 hover:bg-slate-200 hover:text-slate-900">✏️</button>
+      <button data-act="del"  data-id="${m.id}" title="Usuń"   class="rounded p-1 text-slate-500 hover:bg-red-100 hover:text-red-700">🗑️</button>
+    </td>
+  </tr>`;
+}
+
+function card(m, M, rev){
+  const [ico, tn] = T(m);
+  const ips = ipChips(m);
+  const deps = depChips(m, M, '⬅');
+  const users = userChips(m, rev);
+  return `<article class="h-full rounded-xl border border-slate-200 bg-white p-3">
+    <div class="flex items-start gap-2">
+      <span class="text-xl leading-none">${ico}</span>
+      <div class="min-w-0 flex-1">
+        <button data-act="copy" data-id="${m.id}" class="block max-w-full truncate text-left font-semibold text-slate-900 hover:text-sky-600">${esc(m.name)}</button>
+        <div class="mt-1 flex flex-wrap gap-1 text-[10px]">
+          <span class="rounded bg-slate-100 px-1.5 py-0.5 text-slate-600">${tn}</span>
+          ${m.location ? `<span class="rounded bg-slate-100 px-1.5 py-0.5 text-slate-600">📍 ${esc(m.location)}</span>` : ''}
+        </div>
+      </div>
+      <div class="flex gap-1">
+        <button data-act="edit" data-id="${m.id}" title="Edytuj" class="rounded p-1 hover:bg-slate-200">✏️</button>
+        <button data-act="del"  data-id="${m.id}" title="Usuń" class="rounded p-1 hover:bg-red-100">🗑️</button>
+      </div>
+    </div>
+    ${ips ? `<div class="mt-2 flex flex-wrap gap-1">${ips}</div>` : ''}
+    ${(deps || users) ? `<div class="mt-2 flex flex-wrap gap-1">${deps}${users}</div>` : ''}
+    ${m.note ? `<div class="mt-2 border-t border-slate-200 pt-2 text-[11px] text-slate-500">${esc(m.note)}</div>` : ''}
+  </article>`;
+}
+
+/* ---------- RENDER ---------- */
+function render(){
+  const M = new Map(db.map(m => [m.id, m]));
+  const rev = {};
+  db.forEach(m => (m.deps || []).forEach(id => (rev[id] ||= []).push(m)));
+
+  const locs = [...new Set(db.map(m => m.location).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pl'));
+  const lv = $('loc').value, tv = $('typ').value;
+  $('loc').innerHTML = '<option value="">Wszystkie lokalizacje</option>' + locs.map(l => `<option>${esc(l)}</option>`).join('');
+  $('loc').value = locs.includes(lv) ? lv : '';
+  $('typ').innerHTML = '<option value="">Wszystkie typy</option>' +
+    Object.entries(TYPES).map(([k,v]) => `<option value="${k}">${v[0]} ${v[1]}</option>`).join('');
+  $('typ').value = TYPES[tv] ? tv : '';
+  $('locList').innerHTML = locs.map(l => `<option value="${esc(l)}">`).join('');
+
+  const qs = $('q').value.trim().toLowerCase().split(/\s+/).filter(Boolean);
+  const lf = $('loc').value, tf = $('typ').value;
+
+  /* liczniki typów */
+  const cnt = {};
+  db.forEach(m => cnt[m.type] = (cnt[m.type] || 0) + 1);
+  const chip = on => 'rounded-full border px-2.5 py-1 text-xs ' +
+    (on ? 'border-sky-600 bg-sky-600 text-white' : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-100');
+  $('stats').innerHTML =
+    `<button data-type="" class="${chip(!tf)}">Wszystkie <b>${db.length}</b></button>` +
+    Object.entries(TYPES).filter(([k]) => cnt[k]).map(([k,v]) =>
+      `<button data-type="${k}" class="${chip(tf === k)}">${v[0]} ${v[1]} <b>${cnt[k]}</b></button>`).join('');
+
+  /* widok: kafelki / tabela */
+  const tiles = view === 'tiles' || innerWidth < 768;
+  $('tbl').classList.toggle('hidden', tiles);
+  $('cards').classList.toggle('hidden', !tiles);
+
+  const H = new Map(db.map(m => [m.id, [
+    m.name, m.location, m.note, T(m)[1], m.type,
+    ...(m.ips || []).flatMap(i => [i.ip, i.label]),
+    ...(m.deps || []).map(id => M.get(id)?.name),
+    ...(rev[m.id] || []).map(x => x.name)
+  ].filter(Boolean).join(' ').toLowerCase()]));
+
+  const list = db
+    .filter(m => (!lf || m.location === lf) && (!tf || m.type === tf) && qs.every(t => H.get(m.id).includes(t)))
+    .sort((a,b) => (a.location||'').localeCompare(b.location||'','pl') || a.name.localeCompare(b.name,'pl'));
+
+  const rowsEl = $('rows'), cardsEl = $('cards'), emptyEl = $('empty');
+  if (!list.length){
+    rowsEl.innerHTML = ''; cardsEl.innerHTML = '';
+    emptyEl.classList.remove('hidden');
+    emptyEl.textContent = db.length ? 'Brak wyników dla wybranych filtrów.' : 'Brak maszyn. Kliknij „+ Dodaj”, aby dodać pierwszą.';
+  } else {
+    emptyEl.classList.add('hidden');
+    rowsEl.innerHTML  = tiles ? '' : list.map(m => row(m, M, rev)).join('');
+    cardsEl.innerHTML = tiles ? list.map(m => card(m, M, rev)).join('') : '';
+  }
+
+  $('count').textContent = `${list.length} z ${db.length} maszyn` + (lf ? ` • lokalizacja: ${lf}` : '');
+}
+
+/* ---------- MODAL ---------- */
+function ipRow(ip = '', label = ''){
+  const d = document.createElement('div');
+  d.className = 'flex gap-2';
+  d.innerHTML = `<input class="ipv flex-1 rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-sm font-mono text-slate-900 outline-none focus:border-sky-500" placeholder="10.0.0.1" value="${esc(ip)}">
+    <input class="ipl w-32 rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-sm text-slate-900 outline-none focus:border-sky-500" placeholder="opis" value="${esc(label)}">
+    <button type="button" class="rounded-lg bg-slate-200 px-2 text-slate-600 hover:bg-red-100 hover:text-red-700">✕</button>`;
+  d.querySelector('button').onclick = () => d.remove();
+  return d;
+}
+function openModal(m){
+  $('mtitle').textContent = m ? 'Edytuj maszynę' : 'Nowa maszyna';
+  $('fId').value   = m?.id || '';
+  $('fName').value = m?.name || '';
+  $('fType').innerHTML = Object.entries(TYPES).map(([k,v]) => `<option value="${k}">${v[0]} ${v[1]}</option>`).join('');
+  $('fType').value = m?.type || 'pc';
+  $('fLoc').value  = m?.location || '';
+  $('fNote').value = m?.note || '';
+  $('ips').innerHTML = '';
+  ((m?.ips?.length) ? m.ips : [{ip:'',label:''}]).forEach(x => $('ips').appendChild(ipRow(x.ip, x.label)));
+  $('fDeps').innerHTML = db.filter(x => x.id !== m?.id)
+    .sort((a,b) => a.name.localeCompare(b.name,'pl'))
+    .map(x => `<option value="${x.id}">${esc(x.name)}${x.location ? ' — ' + esc(x.location) : ''}</option>`).join('');
+  const sel = m?.deps || [];
+  [...$('fDeps').options].forEach(o => o.selected = sel.includes(o.value));
+  $('modal').classList.remove('hidden'); $('modal').classList.add('flex');
+  $('fName').focus();
+}
+function closeModal(){ $('modal').classList.add('hidden'); $('modal').classList.remove('flex'); }
+
+/* ---------- ZDARZENIA ---------- */
+let raf;
+$('q').oninput = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(render) };
+$('loc').onchange = render;
+$('typ').onchange = render;
+$('add').onclick = () => openModal(null);
+$('cancel').onclick = closeModal;
+$('addIp').onclick = () => $('ips').appendChild(ipRow());
+$('modal').onclick = e => { if (e.target === $('modal')) closeModal() };
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal() });
+
+$('form').onsubmit = e => {
+  e.preventDefault();
+  const id = $('fId').value;
+  const ips = [...$('ips').children]
+    .map(r => ({ ip: r.querySelector('.ipv').value.trim(), label: r.querySelector('.ipl').value.trim() }))
+    .filter(x => x.ip);
+  const obj = {
+    id: id || uid(),
+    name: $('fName').value.trim(),
+    type: $('fType').value,
+    location: $('fLoc').value.trim(),
+    ips, deps: [...$('fDeps').selectedOptions].map(o => o.value),
+    note: $('fNote').value.trim()
+  };
+  if (id) db[db.findIndex(m => m.id === id)] = obj; else db.push(obj);
+  save(); closeModal(); render();
+  toast(id ? 'Zapisano zmiany' : 'Dodano maszynę');
+};
+
+function handleClick(e){
+  const b = e.target.closest('[data-act]');
+  if (!b) return;
+  const id = b.dataset.id, act = b.dataset.act;
+  const m = db.find(x => x.id === id);
+  if (act === 'more')   { open.has(id) ? open.delete(id) : open.add(id); render(); return; }
+  if (act === 'copy')   copy(m.name);
+  if (act === 'copyip') copy(b.dataset.ip);
+  if (act === 'edit')   openModal(m);
+  if (act === 'jump')   { $('q').value = m.name; render(); window.scrollTo({top:0,behavior:'smooth'}) }
+  if (act === 'del' && confirm('Usunąć „' + m.name + '”?')) {
+    db = db.filter(x => x.id !== id);
+    db.forEach(x => x.deps = (x.deps || []).filter(d => d !== id));
+    save(); render(); toast('Usunięto');
+  }
+}
+$('rows').addEventListener('click', handleClick);
+$('cards').addEventListener('click', handleClick);
+
+$('stats').onclick = e => {
+  const b = e.target.closest('[data-type]');
+  if (!b) return;
+  $('typ').value = b.dataset.type; render();
+};
+$('view').onclick = () => {
+  view = view === 'tiles' ? 'table' : 'tiles';
+  try { localStorage.setItem('view', view) } catch(e){}
+  render();
+};
+addEventListener('resize', render);
+
+/* ---------- KOPIA ZAPASOWA ---------- */
+$('exp').onclick = () => {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(db, null, 1)], { type: 'application/json' }));
+  a.download = 'maszyny-' + new Date().toISOString().slice(0,10) + '.json';
+  a.click();
+};
+$('imp').onclick = () => $('file').click();
+$('file').onchange = async () => {
+  try {
+    const d = JSON.parse(await $('file').files[0].text());
+    if (Array.isArray(d)) { db = d; save(); render(); toast('Zaimportowano ' + d.length + ' maszyn') }
+    else alert('Nieprawidłowy plik');
+  } catch(e){ alert('Błąd odczytu JSON') }
+  $('file').value = '';
+};
+
+render();
+</script>
+</body>
+</html>
