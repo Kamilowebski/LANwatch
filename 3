@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Plansza — liczniki</title>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+  :root{
+    --bg:#f4f6fb;
+    --bg-2:#eef1f8;
+    --card:#ffffff;
+    --card-hover:#fdfdff;
+    --line:#e4e8f1;
+    --line-2:#d3dae8;
+    --txt:#0f1729;
+    --txt-2:#3d4759;
+    --muted:#8892a6;
+    --violet:#6d5ce7;
+    --violet-soft:#f0edfe;
+    --blue:#3b82f6;
+    --blue-soft:#e8f0fe;
+    --green:#10b981;
+    --green-soft:#e5f8f1;
+    --cyan:#06b6d4;
+    --cyan-soft:#e0f7fb;
+    --amber:#f59e0b;
+    --amber-soft:#fef4e0;
+    --pink:#ec4899;
+    --pink-soft:#fde8f2;
+    --radius:18px;
+    --radius-sm:12px;
+    --shadow:0 1px 2px rgba(16,24,40,.04), 0 1px 3px rgba(16,24,40,.06);
+    --shadow-lg:0 10px 25px rgba(16,24,40,.08), 0 4px 8px rgba(16,24,40,.04);
+    --trans:.2s cubic-bezier(.4,0,.2,1);
+  }
+
+  html,body{height:100%}
+  body{
+    font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+    background:
+      radial-gradient(1000px 600px at 10% -10%, rgba(109,92,231,.08), transparent 60%),
+      radial-gradient(800px 500px at 95% 0%, rgba(59,130,246,.06), transparent 55%),
+      var(--bg);
+    background-attachment:fixed;
+    color:var(--txt);
+    min-height:100vh;
+    padding:32px clamp(16px,3vw,48px);
+    font-size:14px;
+    line-height:1.45;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  /* HEADER */
+  header{
+    display:flex;justify-content:space-between;align-items:flex-end;
+    gap:20px;flex-wrap:wrap;margin-bottom:32px;
+  }
+  h1{font-size:26px;font-weight:700;letter-spacing:-.6px;color:var(--txt)}
+  h1 span{display:block;color:var(--muted);font-weight:400;font-size:13px;margin-top:4px;letter-spacing:0}
+
+  .clock{
+    font-variant-numeric:tabular-nums;color:var(--txt-2);font-size:13px;
+    padding:10px 16px;background:var(--card);border:1px solid var(--line);
+    border-radius:var(--radius-sm);box-shadow:var(--shadow);font-weight:500;
+  }
+
+  /* SEKCJE */
+  .section-title{
+    font-size:12px;font-weight:700;text-transform:uppercase;
+    letter-spacing:1px;color:var(--muted);
+    margin:32px 0 14px;
+  }
+  .section-title:first-of-type{margin-top:0}
+
+  /* KAFELKI */
+  .tiles{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(220px,1fr));
+    gap:16px;
+  }
+  .tile{
+    position:relative;
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:24px;
+    transition:var(--trans);
+    cursor:pointer;
+    min-height:160px;
+    display:flex;flex-direction:column;
+    box-shadow:var(--shadow);
+  }
+  .tile:hover{
+    transform:translateY(-3px);
+    border-color:var(--line-2);
+    box-shadow:var(--shadow-lg);
+  }
+  .tile:active{transform:translateY(-1px)}
+
+  .tile-icon{
+    width:44px;height:44px;border-radius:12px;
+    display:grid;place-items:center;
+    background:var(--icon-bg, var(--violet-soft));
+    color:var(--icon-color, var(--violet));
+    margin-bottom:18px;
+  }
+  .tile-icon svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.9}
+
+  .tile-label{
+    font-size:13px;font-weight:600;color:var(--txt-2);
+    margin-bottom:4px;
+  }
+  .tile-value{
+    font-size:48px;font-weight:700;letter-spacing:-1.8px;line-height:1;
+    font-variant-numeric:tabular-nums;color:var(--txt);
+    margin-top:auto;
+  }
+  .tile-sub{
+    font-size:12.5px;color:var(--muted);margin-top:6px;
+  }
+
+  /* warianty kolorystyczne */
+  .tile.violet{--icon-bg:var(--violet-soft);--icon-color:var(--violet)}
+  .tile.blue  {--icon-bg:var(--blue-soft);  --icon-color:var(--blue)}
+  .tile.green {--icon-bg:var(--green-soft); --icon-color:var(--green)}
+  .tile.cyan  {--icon-bg:var(--cyan-soft);  --icon-color:var(--cyan)}
+  .tile.amber {--icon-bg:var(--amber-soft); --icon-color:var(--amber)}
+  .tile.pink  {--icon-bg:var(--pink-soft);  --icon-color:var(--pink)}
+
+  /* KAFELEK GŁÓWNY */
+  .tile.hero{
+    grid-column:1/-1;
+    min-height:auto;
+    padding:28px 32px;
+    display:flex;flex-direction:row;align-items:center;gap:24px;
+    background:linear-gradient(135deg,#ffffff 0%, #f6f5fe 100%);
+    border-color:#e2defc;
+    cursor:default;
+  }
+  .tile.hero:hover{transform:none;box-shadow:var(--shadow);border-color:#e2defc}
+  .tile.hero .tile-icon{
+    width:60px;height:60px;margin:0;
+    background:linear-gradient(135deg,var(--violet),var(--blue));
+    color:#fff;
+    box-shadow:0 8px 20px rgba(109,92,231,.25);
+  }
+  .tile.hero .tile-icon svg{width:28px;height:28px}
+  .tile.hero .hero-info{flex:1}
+  .tile.hero .tile-label{margin-bottom:2px}
+  .tile.hero .tile-value{
+    font-size:60px;margin:0;letter-spacing:-2.5px;
+    background:linear-gradient(135deg,var(--violet),var(--blue));
+    -webkit-background-clip:text;background-clip:text;
+    -webkit-text-fill-color:transparent;
+  }
+  .tile.hero .tile-sub{margin-top:6px}
+
+  /* MODAL */
+  .modal-bg{
+    position:fixed;inset:0;background:rgba(15,23,41,.35);
+    backdrop-filter:blur(4px);z-index:50;display:none;
+    place-items:center;padding:20px;
+  }
+  .modal-bg.open{display:grid;animation:fadeIn .18s}
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  .modal{
+    background:#ffffff;
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    width:min(420px,100%);
+    padding:28px;
+    box-shadow:0 24px 60px rgba(15,23,41,.18);
+    animation:slideUp .22s cubic-bezier(.2,.9,.3,1.2);
+  }
+  @keyframes slideUp{from{transform:translateY(16px);opacity:0}to{transform:translateY(0);opacity:1}}
+  .modal h3{font-size:18px;font-weight:700;margin-bottom:6px;color:var(--txt)}
+  .modal p{color:var(--muted);font-size:13px;margin-bottom:20px}
+  .modal label{
+    display:block;font-size:11.5px;color:var(--muted);
+    text-transform:uppercase;letter-spacing:.6px;
+    margin-bottom:8px;font-weight:600;
+  }
+  .modal input{
+    width:100%;padding:14px 16px;
+    background:#f8fafc;border:1px solid var(--line-2);
+    color:var(--txt);font-size:22px;font-weight:700;
+    border-radius:var(--radius-sm);outline:none;
+    font-family:inherit;font-variant-numeric:tabular-nums;
+    transition:var(--trans);
+  }
+  .modal input:focus{
+    border-color:var(--violet);background:#fff;
+    box-shadow:0 0 0 4px rgba(109,92,231,.12);
+  }
+  .modal-actions{
+    display:flex;gap:10px;margin-top:24px;justify-content:flex-end;
+  }
+  .btn{
+    padding:11px 20px;border-radius:var(--radius-sm);
+    border:1px solid var(--line-2);background:#fff;
+    color:var(--txt-2);font-size:13.5px;font-weight:600;font-family:inherit;
+    cursor:pointer;transition:var(--trans);
+  }
+  .btn:hover{background:#f8fafc;border-color:var(--line-2);color:var(--txt)}
+  .btn.primary{
+    background:linear-gradient(135deg,var(--violet),var(--blue));
+    border-color:transparent;color:#fff;
+    box-shadow:0 6px 16px rgba(109,92,231,.28);
+  }
+  .btn.primary:hover{filter:brightness(1.06);color:#fff}
+
+  /* STOPKA */
+  .footer{
+    margin-top:44px;padding-top:20px;
+    border-top:1px solid var(--line);
+    display:flex;justify-content:space-between;align-items:center;
+    color:var(--muted);font-size:12.5px;flex-wrap:wrap;gap:10px;
+  }
+
+  /* TOAST */
+  .toast{
+    position:fixed;bottom:28px;left:50%;
+    transform:translateX(-50%) translateY(80px);
+    background:var(--txt);color:#fff;
+    padding:12px 22px;border-radius:12px;font-size:13.5px;
+    box-shadow:0 12px 40px rgba(15,23,41,.25);
+    opacity:0;transition:.3s;z-index:100;font-weight:500;
+  }
+  .toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+
+  /* RESPONSYWNOŚĆ */
+  @media(max-width:600px){
+    .tile.hero{flex-direction:column;align-items:flex-start;text-align:left}
+    .tile.hero .tile-value{font-size:48px}
+    h1{font-size:22px}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Plansza liczników <span>Kliknij kafelek, aby wpisać liczbę</span></h1>
+  <div class="clock" id="clock">—</div>
+</header>
+
+<!-- GŁÓWNY KAFELEK -->
+<section>
+  <div class="tiles" id="heroTiles"></div>
+</section>
+
+<!-- KATEGORIE -->
+<div class="section-title">Kategorie</div>
+<section>
+  <div class="tiles" id="categoryTiles"></div>
+</section>
+
+<!-- POZOSTAŁE -->
+<div class="section-title">Pozostałe</div>
+<section>
+  <div class="tiles" id="otherTiles"></div>
+</section>
+
+<div class="footer">
+  <span>Dane zapisują się lokalnie w przeglądarce (localStorage)</span>
+  <button class="btn" id="btnReset" style="padding:8px 14px;font-size:12.5px">Reset liczników</button>
+</div>
+
+<!-- MODAL EDYCJI -->
+<div class="modal-bg" id="modalBg">
+  <div class="modal">
+    <h3 id="mTitle">—</h3>
+    <p>Wpisz aktualną liczbę dla tego kafelka.</p>
+    <label for="mInput">Liczba</label>
+    <input type="number" id="mInput" min="0" step="1" value="0">
+    <div class="modal-actions">
+      <button class="btn" id="mCancel">Anuluj</button>
+      <button class="btn primary" id="mSave">Zapisz</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast">Zapisano</div>
+
+<script>
+/* ==================================================================
+   KONFIGURACJA KAFELKÓW
+   Zmień nazwy, ikony i kolory — dodawaj/usuwaj dowolnie.
+   Pole `id` musi być unikalne (pod nim zapisuje się liczba).
+   ================================================================== */
+
+const ICONS = {
+  scale:    '<svg viewBox="0 0 24 24"><path d="M12 3v18"/><path d="M6 7h12"/><path d="M6 7 3 14a3 3 0 0 0 6 0z"/><path d="M18 7l-3 7a3 3 0 0 0 6 0z"/><path d="M8 21h8"/></svg>',
+  terminal: '<svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="18" rx="2"/><path d="m7 9 3 3-3 3M13 15h4"/></svg>',
+  monitor:  '<svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>',
+  laptop:   '<svg viewBox="0 0 24 24"><path d="M3 5h18v11H3z"/><path d="M2 20h20"/></svg>',
+  printer:  '<svg viewBox="0 0 24 24"><path d="M6 9V2h12v7"/><rect x="4" y="9" width="16" height="8" rx="2"/><path d="M8 17h8v5H8z"/></svg>',
+  phone:    '<svg viewBox="0 0 24 24"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></svg>',
+  box:      '<svg viewBox="0 0 24 24"><path d="m3 7 9-4 9 4-9 4-9-4z"/><path d="M3 7v10l9 4 9-4V7"/><path d="M12 11v10"/></svg>',
+  grid:     '<svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>',
+  server:   '<svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="7" rx="2"/><rect x="3" y="14" width="18" height="7" rx="2"/><path d="M7 6.5h.01M7 17.5h.01"/></svg>',
+  network:  '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v7M12 15v7M2 12h7M15 12h7"/></svg>',
+  wifi:     '<svg viewBox="0 0 24 24"><path d="M5 12a10 10 0 0 1 14 0M8.5 15.5a5 5 0 0 1 7 0"/><circle cx="12" cy="19" r="1"/></svg>',
+  wrench:   '<svg viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L4 17v3h3l5.3-5.3a4 4 0 0 0 5.4-5.4l-2.3 2.3-2-2 2.3-2.3z"/></svg>'
+};
+
+const TILES = {
+  hero: [
+    {
+      id: "total",
+      label: "Wszystkie urządzenia",
+      value: 0,
+      sub: "suma kategorii poniżej",
+      icon: "grid",
+      color: "violet"
+    }
+  ],
+  categories: [
+    { id:"bizerba",   label:"Bizerba",       value:0, sub:"wagi etykietujące",       icon:"scale",    color:"violet" },
+    { id:"terminale", label:"Terminale",     value:0, sub:"urządzenia terminalowe",  icon:"terminal", color:"blue"   },
+    { id:"biurka",    label:"Biurka",        value:0, sub:"stanowiska komputerowe",  icon:"monitor",  color:"cyan"   },
+    { id:"laptopy",   label:"Laptopy",       value:0, sub:"przenośne",               icon:"laptop",   color:"green"  },
+    { id:"drukarki",  label:"Drukarki",      value:0, sub:"urządzenia peryferyjne",  icon:"printer",  color:"amber"  },
+    { id:"telefony",  label:"Telefony",      value:0, sub:"służbowe",                icon:"phone",    color:"pink"   }
+  ],
+  other: [
+    { id:"serwery",  label:"Serwery",        value:0, sub:"infrastruktura",          icon:"server",   color:"blue"   },
+    { id:"siec",     label:"Punkty sieciowe",value:0, sub:"aktywne porty",           icon:"network",  color:"cyan"   },
+    { id:"wifi",     label:"Access pointy",  value:0, sub:"Wi-Fi",                   icon:"wifi",     color:"green"  },
+    { id:"serwis",   label:"W serwisie",     value:0, sub:"w naprawie / przeglądzie",icon:"wrench",   color:"amber"  },
+    { id:"inne",     label:"Inne",           value:0, sub:"pozostałe urządzenia",    icon:"box",      color:"pink"   }
+  ]
+};
+
+/* ==================================================================
+   STAN — localStorage
+   ================================================================== */
+const STORAGE_KEY = "dashboard_counts_v2";
+
+function loadCounts(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : {};
+  }catch{ return {}; }
+}
+function saveCounts(counts){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(counts));
+}
+
+let counts = loadCounts();
+
+function applyCounts(){
+  [...TILES.hero, ...TILES.categories, ...TILES.other].forEach(t=>{
+    if(typeof counts[t.id] === "number") t.value = counts[t.id];
+  });
+}
+applyCounts();
+
+/* ==================================================================
+   RENDER
+   ================================================================== */
+function tileHTML(t, isHero=false){
+  return `
+    <div class="tile ${t.color} ${isHero?'hero':''}" data-id="${t.id}">
+      <div class="tile-icon">${ICONS[t.icon] || ICONS.box}</div>
+      <div class="${isHero?'hero-info':''}">
+        <div class="tile-label">${t.label}</div>
+        <div class="tile-value">${t.value.toLocaleString("pl-PL")}</div>
+        <div class="tile-sub">${t.sub || ""}</div>
+      </div>
+    </div>`;
+}
+
+function renderAll(){
+  // hero = suma wszystkich kategorii + pozostałe
+  const sum = [...TILES.categories, ...TILES.other]
+    .reduce((a,t)=>a + (Number(t.value)||0), 0);
+  TILES.hero[0].value = sum;
+
+  document.getElementById("heroTiles").innerHTML =
+    TILES.hero.map(t=>tileHTML(t,true)).join("");
+
+  document.getElementById("categoryTiles").innerHTML =
+    TILES.categories.map(t=>tileHTML(t)).join("");
+
+  document.getElementById("otherTiles").innerHTML =
+    TILES.other.map(t=>tileHTML(t)).join("");
+}
+renderAll();
+
+/* ==================================================================
+   EDYCJA
+   ================================================================== */
+const modalBg = document.getElementById("modalBg");
+const mTitle  = document.getElementById("mTitle");
+const mInput  = document.getElementById("mInput");
+let editingId = null;
+
+function findTile(id){
+  return [...TILES.categories, ...TILES.other].find(t=>t.id===id);
+}
+
+function openEdit(id){
+  const t = findTile(id);
+  if(!t) return;
+  editingId = id;
+  mTitle.textContent = t.label;
+  mInput.value = t.value;
+  modalBg.classList.add("open");
+  setTimeout(()=>{ mInput.focus(); mInput.select(); }, 60);
+}
+
+function closeModal(){ modalBg.classList.remove("open"); editingId = null; }
+
+document.body.addEventListener("click", e=>{
+  const tile = e.target.closest(".tile");
+  if(!tile) return;
+  const id = tile.dataset.id;
+  if(id === "total") return;
+  openEdit(id);
+});
+
+document.getElementById("mCancel").addEventListener("click", closeModal);
+modalBg.addEventListener("click", e=>{ if(e.target===modalBg) closeModal(); });
+document.addEventListener("keydown", e=>{
+  if(e.key === "Escape") closeModal();
+  if(e.key === "Enter" && modalBg.classList.contains("open")) saveEdit();
+});
+
+function saveEdit(){
+  if(!editingId) return;
+  const val = Math.max(0, Math.floor(Number(mInput.value) || 0));
+  const t = findTile(editingId);
+  t.value = val;
+  counts[editingId] = val;
+  saveCounts(counts);
+  renderAll();
+  closeModal();
+  showToast(`Zapisano: ${t.label} = ${val}`);
+}
+document.getElementById("mSave").addEventListener("click", saveEdit);
+
+/* ==================================================================
+   RESET
+   ================================================================== */
+document.getElementById("btnReset").addEventListener("click", ()=>{
+  if(!confirm("Zresetować wszystkie liczniki do 0?")) return;
+  counts = {};
+  saveCounts(counts);
+  [...TILES.hero, ...TILES.categories, ...TILES.other].forEach(t=>t.value = 0);
+  renderAll();
+  showToast("Liczniki zresetowane");
+});
+
+/* ==================================================================
+   ZEGAR + TOAST
+   ================================================================== */
+function tick(){
+  document.getElementById("clock").textContent =
+    new Date().toLocaleString("pl-PL",{dateStyle:"full",timeStyle:"short"});
+}
+tick(); setInterval(tick, 30000);
+
+const toastEl = document.getElementById("toast");
+let toastTimer;
+function showToast(msg){
+  toastEl.textContent = msg;
+  toastEl.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>toastEl.classList.remove("show"), 2000);
+}
+</script>
+</body>
+</html>
