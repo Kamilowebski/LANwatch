@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dziennik helpdesk</title>
+<script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen">
+<div class="max-w-4xl mx-auto p-4">
+  <header class="flex flex-wrap items-center justify-between gap-2 mb-4">
+    <h1 class="text-2xl font-bold">🛠️ Dziennik helpdesk</h1>
+    <div class="flex gap-2 text-sm">
+      <button onclick="exportData()" class="px-3 py-1.5 bg-white border rounded hover:bg-slate-50">Eksport</button>
+      <label class="px-3 py-1.5 bg-white border rounded hover:bg-slate-50 cursor-pointer">Import
+        <input type="file" accept=".json" class="hidden" onchange="importData(event)">
+      </label>
+    </div>
+  </header>
+
+  <nav class="flex gap-2 mb-4">
+    <button id="tab-log" onclick="showTab('log')" class="px-4 py-2 rounded font-medium"></button>
+    <button id="tab-sol" onclick="showTab('sol')" class="px-4 py-2 rounded font-medium"></button>
+  </nav>
+
+  <input id="search" oninput="render()" placeholder="🔍 Szukaj (tekst, maszyna, tag)..." class="w-full mb-4 px-3 py-2 border rounded bg-white">
+
+  <!-- DZIENNIK -->
+  <section id="sec-log">
+    <div class="bg-white rounded-lg shadow p-4 mb-4 grid gap-2 sm:grid-cols-3">
+      <input id="l-date" type="date" class="border rounded px-3 py-2">
+      <input id="l-ticket" placeholder="Nr ticketu" class="border rounded px-3 py-2">
+      <input id="l-machine" placeholder="Maszyna / system" class="border rounded px-3 py-2">
+      <textarea id="l-text" rows="3" placeholder="Co zrobiłem..." class="border rounded px-3 py-2 sm:col-span-3"></textarea>
+      <button onclick="addLog()" class="bg-blue-600 text-white rounded px-4 py-2 hover:bg-blue-700 sm:col-span-3">Dodaj wpis</button>
+    </div>
+    <div id="log-list" class="space-y-4"></div>
+  </section>
+
+  <!-- ROZWIĄZANIA -->
+  <section id="sec-sol" class="hidden">
+    <div class="bg-white rounded-lg shadow p-4 mb-4 grid gap-2 sm:grid-cols-2">
+      <input id="s-title" placeholder="Problem (krótki tytuł)" class="border rounded px-3 py-2 sm:col-span-2">
+      <input id="s-ticket" placeholder="Nr ticketu" class="border rounded px-3 py-2">
+      <input id="s-machine" placeholder="Maszyna / system" class="border rounded px-3 py-2">
+      <input id="s-tags" placeholder="Tagi (po przecinku)" class="border rounded px-3 py-2 sm:col-span-2">
+      <textarea id="s-text" rows="5" placeholder="Rozwiązanie / kroki..." class="border rounded px-3 py-2 sm:col-span-2 font-mono text-sm"></textarea>
+      <button onclick="addSol()" class="bg-green-600 text-white rounded px-4 py-2 hover:bg-green-700 sm:col-span-2">Zapisz rozwiązanie</button>
+    </div>
+    <div id="sol-list" class="space-y-3"></div>
+  </section>
+</div>
+
+<script>
+const KEY = 'dziennik-helpdesk-v1';
+let db = { logs: [], sols: [] };
+let tab = 'log';
+try { const s = localStorage.getItem(KEY); if (s) db = JSON.parse(s); } catch (e) {}
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(db)); } catch (e) { alert('Nie można zapisać danych.'); } };
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const today = () => new Date().toISOString().slice(0, 10);
+$('l-date').value = today();
+
+function showTab(t) { tab = t; $('sec-log').classList.toggle('hidden', t !== 'log'); $('sec-sol').classList.toggle('hidden', t !== 'sol'); render(); }
+
+function addLog() {
+  const text = $('l-text').value.trim();
+  if (!text) return;
+  db.logs.push({ id: Date.now(), date: $('l-date').value || today(), machine: $('l-machine').value.trim(), ticket: $('l-ticket').value.trim(), text });
+  $('l-text').value = ''; $('l-machine').value = ''; $('l-ticket').value = '';
+  save(); render();
+}
+function addSol() {
+  const title = $('s-title').value.trim(), text = $('s-text').value.trim();
+  if (!title || !text) return;
+  db.sols.push({ id: Date.now(), date: today(), title, text,
+    machine: $('s-machine').value.trim(), ticket: $('s-ticket').value.trim(),
+    tags: $('s-tags').value.split(',').map(t => t.trim()).filter(Boolean) });
+  ['s-title','s-text','s-machine','s-tags','s-ticket'].forEach(i => $(i).value = '');
+  save(); render();
+}
+function del(type, id) { if (!confirm('Usunąć wpis?')) return; db[type] = db[type].filter(x => x.id !== id); save(); render(); }
+function copySol(id) { const s = db.sols.find(x => x.id === id); navigator.clipboard.writeText(s.title + '\n\n' + s.text); }
+
+function render() {
+  const q = $('search').value.toLowerCase();
+  const match = o => JSON.stringify(o).toLowerCase().includes(q);
+  const tabCls = a => 'px-4 py-2 rounded font-medium ' + (a ? 'bg-slate-800 text-white' : 'bg-white border hover:bg-slate-50');
+  $('tab-log').className = tabCls(tab === 'log'); $('tab-log').textContent = `📅 Dziennik (${db.logs.length})`;
+  $('tab-sol').className = tabCls(tab === 'sol'); $('tab-sol').textContent = `💡 Rozwiązania (${db.sols.length})`;
+
+  const logs = db.logs.filter(match).sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
+  const groups = {};
+  logs.forEach(l => (groups[l.date] = groups[l.date] || []).push(l));
+  $('log-list').innerHTML = Object.keys(groups).map(d => `
+    <div class="bg-white rounded-lg shadow p-4">
+      <h3 class="font-semibold text-slate-600 mb-2">${esc(new Date(d + 'T00:00').toLocaleDateString('pl-PL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }))}</h3>
+      <ul class="space-y-2">${groups[d].map(l => `
+        <li class="flex justify-between gap-2 border-l-4 border-blue-400 pl-3">
+          <div>${l.ticket ? `<span class="text-xs bg-amber-100 text-amber-800 font-mono rounded px-2 py-0.5 mr-1">🎫 ${esc(l.ticket)}</span>` : ''}${l.machine ? `<span class="text-xs bg-slate-200 rounded px-2 py-0.5 mr-1">${esc(l.machine)}</span>` : ''}<span class="whitespace-pre-wrap">${esc(l.text)}</span></div>
+          <button onclick="del('logs',${l.id})" class="text-slate-400 hover:text-red-600">✕</button>
+        </li>`).join('')}</ul>
+    </div>`).join('') || '<p class="text-slate-500 text-center py-6">Brak wpisów.</p>';
+
+  const sols = db.sols.filter(match).sort((a, b) => b.id - a.id);
+  $('sol-list').innerHTML = sols.map(s => `
+    <details class="bg-white rounded-lg shadow p-4">
+      <summary class="cursor-pointer font-semibold">${s.ticket ? `<span class="text-xs bg-amber-100 text-amber-800 font-mono rounded px-2 py-0.5 mr-1">🎫 ${esc(s.ticket)}</span>` : ''}${esc(s.title)}
+        ${s.machine ? `<span class="text-xs bg-slate-200 rounded px-2 py-0.5 ml-1">${esc(s.machine)}</span>` : ''}
+        ${s.tags.map(t => `<span class="text-xs bg-green-100 text-green-800 rounded px-2 py-0.5 ml-1">#${esc(t)}</span>`).join('')}
+      </summary>
+      <pre class="whitespace-pre-wrap font-mono text-sm bg-slate-50 rounded p-3 mt-3">${esc(s.text)}</pre>
+      <div class="flex justify-between mt-2 text-sm text-slate-500">
+        <span>${esc(s.date)}</span>
+        <span><button onclick="copySol(${s.id})" class="hover:text-blue-600 mr-3">Kopiuj</button><button onclick="del('sols',${s.id})" class="hover:text-red-600">Usuń</button></span>
+      </div>
+    </details>`).join('') || '<p class="text-slate-500 text-center py-6">Brak rozwiązań.</p>';
+}
+
+function exportData() {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(db, null, 2)], { type: 'application/json' }));
+  a.download = 'dziennik-helpdesk-' + today() + '.json'; a.click();
+}
+function importData(e) {
+  const f = e.target.files[0]; if (!f) return;
+  const r = new FileReader();
+  r.onload = () => {
+    try { const d = JSON.parse(r.result); if (!Array.isArray(d.logs) || !Array.isArray(d.sols)) throw 0; db = d; save(); render(); }
+    catch (x) { alert('Nieprawidłowy plik.'); }
+  };
+  r.readAsText(f);
+}
+render();
+</script>
+</body>
+</html>
