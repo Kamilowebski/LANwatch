@@ -3,190 +3,300 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Zadania do zrobienia</title>
+  <title>Zadania – lista TODO do pracy</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: { extend: { fontFamily: { sans: ['"Schibsted Grotesk"', 'system-ui', 'sans-serif'] } } }
-    };
-    // domyślnie jasny motyw; ciemny tylko jeśli został wybrany
-    try { if (localStorage.getItem('todo-theme') === 'dark') document.documentElement.classList.add('dark'); } catch {}
+    tailwind.config = { theme: { extend: { colors: { page: '#f4f7f9' } } } }
   </script>
   <style>
-    .task-done .t-title { text-decoration: line-through; opacity: .5; }
-    @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+    body { font-family: Inter, system-ui, sans-serif; }
+    .task-done .t-title { text-decoration: line-through; color: #94a3b8; }
   </style>
 </head>
-<body class="min-h-screen bg-stone-100 text-slate-800 font-sans antialiased dark:bg-slate-950 dark:text-slate-200">
-  <main class="mx-auto max-w-2xl px-4 py-10 sm:py-16">
+<body class="min-h-screen bg-page text-slate-800 antialiased">
+  <div class="max-w-6xl mx-auto px-4 py-8 space-y-6">
 
-    <header class="mb-8">
-      <div class="flex items-start justify-between gap-4">
-        <div>
-          <p id="today" class="text-sm text-slate-500 dark:text-slate-400"></p>
-          <h1 class="mt-1 text-3xl font-bold tracking-tight sm:text-4xl">Zadania</h1>
-        </div>
-        <button id="theme-toggle" type="button"
-          class="rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-stone-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"></button>
+    <!-- Nagłówek -->
+    <header class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+      <div>
+        <h1 class="text-2xl font-semibold text-slate-800">Zadania</h1>
+        <p id="today" class="mt-1 text-sm text-slate-500"></p>
       </div>
-      <div class="mt-5">
-        <div class="flex items-baseline justify-between text-sm">
-          <span id="progress-label" class="font-medium"></span>
-          <span id="progress-pct" class="text-slate-500 dark:text-slate-400"></span>
-        </div>
-        <div class="mt-2 h-2 overflow-hidden rounded-full bg-stone-200 dark:bg-slate-800">
-          <div id="progress-bar" class="h-full rounded-full bg-emerald-600 transition-all duration-300" style="width:0%"></div>
-        </div>
+      <div class="flex flex-wrap gap-2">
+        <button id="export" type="button" class="inline-flex items-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-medium text-slate-700 border border-slate-300 shadow-sm hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition">
+          <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11m0 0l-4-4m4 4l4-4M5 20h14"/></svg>
+          Eksportuj
+        </button>
+        <button id="import" type="button" class="inline-flex items-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-medium text-slate-700 border border-slate-300 shadow-sm hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition">
+          <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V5m0 0l-4 4m4-4l4 4M5 20h14"/></svg>
+          Importuj
+        </button>
+        <button id="clear-done" type="button" class="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition">
+          <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6m4-6v6M6 7l1 12a1 1 0 001 1h8a1 1 0 001-1l1-12M9 7V4h6v3"/></svg>
+          Usuń zrobione
+        </button>
+        <input id="import-file" type="file" accept="application/json" class="hidden">
       </div>
     </header>
 
-    <form id="add-form" class="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-stone-200 dark:bg-slate-900 dark:ring-slate-800">
-      <label for="new-title" class="sr-only">Nowe zadanie</label>
-      <input id="new-title" type="text" required maxlength="200" autocomplete="off"
-        placeholder="Co trzeba zrobić?"
-        class="w-full rounded-lg border-0 bg-transparent px-1 py-2 text-lg placeholder:text-slate-400 focus:outline-none focus:ring-0">
-      <div class="mt-3 flex flex-wrap items-center gap-2 border-t border-stone-100 pt-3 dark:border-slate-800">
-        <label class="sr-only" for="new-prio">Priorytet</label>
-        <select id="new-prio" class="rounded-lg border border-stone-200 bg-stone-50 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600 dark:border-slate-700 dark:bg-slate-800">
-          <option value="high">Pilne</option>
-          <option value="normal" selected>Zwykłe</option>
-          <option value="low">Kiedyś</option>
-        </select>
-        <label class="sr-only" for="new-due">Termin</label>
-        <input id="new-due" type="date"
-          class="rounded-lg border border-stone-200 bg-stone-50 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600 dark:border-slate-700 dark:bg-slate-800 dark:[color-scheme:dark]">
-        <button type="submit"
-          class="ml-auto rounded-lg bg-emerald-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900">
-          Dodaj zadanie
-        </button>
+    <!-- Postęp -->
+    <section class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div class="flex items-baseline justify-between text-sm">
+        <span id="progress-label" class="font-medium text-slate-800"></span>
+        <span id="progress-pct" class="text-slate-500"></span>
+      </div>
+      <div class="mt-3 h-2 overflow-hidden rounded-full bg-slate-100">
+        <div id="progress-bar" class="h-full rounded-full bg-blue-600 transition-all duration-300" style="width:0%"></div>
+      </div>
+      <div id="stats" class="mt-4 flex flex-wrap gap-2"></div>
+    </section>
+
+    <!-- Dodawanie -->
+    <section class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+      <form id="add-form" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-12">
+        <div class="sm:col-span-2 lg:col-span-6">
+          <label for="new-title" class="block text-sm font-medium text-slate-700 mb-1">Nowe zadanie</label>
+          <input id="new-title" type="text" required maxlength="200" autocomplete="off" placeholder="Co trzeba zrobić?"
+            class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none">
+        </div>
+        <div class="lg:col-span-2">
+          <label for="new-prio" class="block text-sm font-medium text-slate-700 mb-1">Priorytet</label>
+          <select id="new-prio" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none">
+            <option value="high">Pilne</option>
+            <option value="normal" selected>Zwykłe</option>
+            <option value="low">Kiedyś</option>
+          </select>
+        </div>
+        <div class="lg:col-span-2">
+          <label for="new-due" class="block text-sm font-medium text-slate-700 mb-1">Termin</label>
+          <input id="new-due" type="date" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none">
+        </div>
+        <div class="flex items-end sm:col-span-2 lg:col-span-2">
+          <button type="submit" class="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition">
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+            Dodaj
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <!-- Lista -->
+    <section class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+      <div class="flex flex-col gap-3 border-b border-slate-100 p-4 sm:flex-row sm:items-center sm:justify-between">
+        <div id="filters" class="flex flex-wrap gap-2">
+          <button type="button" data-filter="all">Wszystkie</button>
+          <button type="button" data-filter="active">Do zrobienia</button>
+          <button type="button" data-filter="done">Zrobione</button>
+        </div>
+        <div class="sm:w-64">
+          <label for="search" class="sr-only">Szukaj</label>
+          <input id="search" type="search" placeholder="Szukaj zadania…"
+            class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none">
+        </div>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-sm">
+          <thead class="bg-slate-50 text-xs uppercase text-slate-500">
+            <tr>
+              <th class="w-10 px-4 py-3"><span class="sr-only">Status</span></th>
+              <th class="px-4 py-3 font-medium">Zadanie</th>
+              <th class="hidden px-4 py-3 font-medium sm:table-cell">Priorytet</th>
+              <th class="hidden px-4 py-3 font-medium sm:table-cell">Termin</th>
+              <th class="w-24 px-4 py-3"><span class="sr-only">Akcje</span></th>
+            </tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+      <div id="empty" class="hidden m-4 rounded-xl border border-slate-200 bg-slate-50 p-6 text-center text-sm text-slate-500"></div>
+    </section>
+
+    <p class="text-xs text-slate-500">Dane są zapisane tylko w tej przeglądarce. Do przeniesienia na inny komputer użyj eksportu i importu.</p>
+  </div>
+
+  <!-- Modal: edycja zadania -->
+  <div id="edit-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/40 p-4" role="dialog" aria-modal="true" aria-labelledby="edit-heading">
+    <form id="edit-form" class="w-full max-w-md space-y-4 rounded-xl bg-white p-6 shadow-xl">
+      <h2 id="edit-heading" class="text-lg font-semibold text-slate-800">Edytuj zadanie</h2>
+      <div>
+        <label for="edit-title" class="block text-sm font-medium text-slate-700 mb-1">Zadanie</label>
+        <input id="edit-title" type="text" required maxlength="200" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none">
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label for="edit-prio" class="block text-sm font-medium text-slate-700 mb-1">Priorytet</label>
+          <select id="edit-prio" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none">
+            <option value="high">Pilne</option>
+            <option value="normal">Zwykłe</option>
+            <option value="low">Kiedyś</option>
+          </select>
+        </div>
+        <div>
+          <label for="edit-due" class="block text-sm font-medium text-slate-700 mb-1">Termin</label>
+          <input id="edit-due" type="date" class="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none">
+        </div>
+      </div>
+      <div class="flex justify-end gap-2 pt-2">
+        <button type="button" data-close class="inline-flex items-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-medium text-slate-700 border border-slate-300 shadow-sm hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition">Anuluj</button>
+        <button type="submit" class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition">Zapisz</button>
       </div>
     </form>
+  </div>
 
-    <div class="mt-8 flex flex-wrap items-center gap-3">
-      <div id="filters" class="inline-flex rounded-lg bg-stone-200 p-1 text-sm dark:bg-slate-800" role="tablist">
-        <button data-filter="all" class="rounded-md px-3 py-1.5 font-medium">Wszystkie</button>
-        <button data-filter="active" class="rounded-md px-3 py-1.5 font-medium">Do zrobienia</button>
-        <button data-filter="done" class="rounded-md px-3 py-1.5 font-medium">Zrobione</button>
+  <!-- Modal: potwierdzenie -->
+  <div id="confirm-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/40 p-4" role="dialog" aria-modal="true" aria-labelledby="confirm-heading">
+    <div class="w-full max-w-md space-y-4 rounded-xl bg-white p-6 shadow-xl">
+      <h2 id="confirm-heading" class="text-lg font-semibold text-slate-800"></h2>
+      <p id="confirm-text" class="text-sm text-slate-500"></p>
+      <div class="flex justify-end gap-2 pt-2">
+        <button type="button" data-close class="inline-flex items-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-medium text-slate-700 border border-slate-300 shadow-sm hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition">Anuluj</button>
+        <button id="confirm-ok" type="button" class="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition">Potwierdź</button>
       </div>
-      <label class="sr-only" for="search">Szukaj</label>
-      <input id="search" type="search" placeholder="Szukaj…"
-        class="min-w-0 flex-1 rounded-lg border border-stone-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600 dark:border-slate-700 dark:bg-slate-900">
     </div>
-
-    <ul id="list" class="mt-4 space-y-2"></ul>
-    <p id="empty" class="hidden rounded-2xl border border-dashed border-stone-300 px-6 py-10 text-center text-slate-500 dark:border-slate-700 dark:text-slate-400"></p>
-
-    <footer class="mt-8 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-slate-500 dark:text-slate-400">
-      <button id="clear-done" class="underline-offset-4 hover:text-slate-800 hover:underline dark:hover:text-slate-200">Usuń zrobione</button>
-      <button id="export" class="underline-offset-4 hover:text-slate-800 hover:underline dark:hover:text-slate-200">Eksportuj do pliku</button>
-      <button id="import" class="underline-offset-4 hover:text-slate-800 hover:underline dark:hover:text-slate-200">Importuj z pliku</button>
-      <input id="import-file" type="file" accept="application/json" class="hidden">
-      <span class="basis-full text-xs sm:basis-auto sm:ml-auto">Dane są zapisane tylko w tej przeglądarce.</span>
-    </footer>
-  </main>
+  </div>
 
   <script>
-    const KEY = 'todo-praca-v1';
+    // --- Stałe i klucze localStorage ---
+    const STORAGE_KEY = 'todo-praca-v1';
+    const BADGE = 'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium';
     const PRIO = {
-      high:   { label: 'Pilne',  order: 0, bar: 'bg-rose-500',  chip: 'bg-rose-50 text-rose-700 dark:bg-rose-950 dark:text-rose-300' },
-      normal: { label: 'Zwykłe', order: 1, bar: 'bg-sky-500',   chip: 'bg-sky-50 text-sky-700 dark:bg-sky-950 dark:text-sky-300' },
-      low:    { label: 'Kiedyś', order: 2, bar: 'bg-stone-300 dark:bg-slate-600', chip: 'bg-stone-100 text-stone-600 dark:bg-slate-800 dark:text-slate-400' }
+      high:   { label: 'Pilne',  order: 0, color: 'bg-red-50 text-red-700' },
+      normal: { label: 'Zwykłe', order: 1, color: 'bg-sky-50 text-sky-700' },
+      low:    { label: 'Kiedyś', order: 2, color: 'bg-slate-100 text-slate-600' }
     };
+    // Klasy przycisków filtrów (te same co przyciski główny / drugorzędny)
+    const BTN = 'inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition ';
+    const BTN_PRIMARY = BTN + 'bg-blue-600 text-white hover:bg-blue-700';
+    const BTN_SECONDARY = BTN + 'bg-white text-slate-700 border border-slate-300 hover:bg-slate-50';
+    const ICON_EDIT = '<svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9a2.1 2.1 0 00-4-4L4 16v4zM14 6l4 4"/></svg>';
+    const ICON_TRASH = '<svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6m4-6v6M6 7l1 12a1 1 0 001 1h8a1 1 0 001-1l1-12M9 7V4h6v3"/></svg>';
 
+    // --- Stan ---
     let tasks = load();
     let filter = 'all';
     let query = '';
+    let editingId = null;
+    let onConfirm = null;
 
     const $ = (s) => document.querySelector(s);
-    const list = $('#list'), empty = $('#empty');
 
+    // --- Pamięć lokalna ---
     function load() {
-      try { const d = JSON.parse(localStorage.getItem(KEY)); return Array.isArray(d) ? d : []; }
+      try { const d = JSON.parse(localStorage.getItem(STORAGE_KEY)); return Array.isArray(d) ? d : []; }
       catch { return []; }
     }
     function save() {
-      try { localStorage.setItem(KEY, JSON.stringify(tasks)); } catch { /* brak dostępu do storage */ }
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks)); } catch { /* brak dostępu do storage */ }
     }
-    const esc = (s) => s.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-    const isoToday = () => { const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 10); };
+    try { localStorage.removeItem('todo-theme'); } catch {} // sprzątanie po starym przełączniku motywu
 
-    function dueLabel(t) {
-      if (!t.due) return null;
+    // --- Pomocnicze ---
+    const esc = (s) => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    function isoToday() {
+      const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+      return d.toISOString().slice(0, 10);
+    }
+    function shortDate(iso) {
+      return new Date(iso).toLocaleDateString('pl-PL', { day: 'numeric', month: 'short' });
+    }
+    const prioBadge = (t) => `<span class="${BADGE} ${PRIO[t.prio].color}">${PRIO[t.prio].label}</span>`;
+
+    // Termin: po terminie = czerwony, dziś = bursztynowy, reszta = szary tekst
+    function dueHtml(t) {
+      if (!t.due) return '';
       const today = isoToday();
-      const tomorrow = (() => { const d = new Date(today); d.setDate(d.getDate() + 1); return d.toISOString().slice(0, 10); })();
-      const overdue = !t.done && t.due < today;
-      let text;
-      if (t.due === today) text = 'dziś';
-      else if (t.due === tomorrow) text = 'jutro';
-      else text = new Date(t.due).toLocaleDateString('pl-PL', { day: 'numeric', month: 'short' });
-      return { text: overdue ? 'po terminie · ' + text : text, overdue };
+      if (!t.done && t.due < today) return `<span class="${BADGE} bg-red-50 text-red-700">Po terminie · ${shortDate(t.due)}</span>`;
+      if (!t.done && t.due === today) return `<span class="${BADGE} bg-amber-50 text-amber-700">Dziś</span>`;
+      return `<span class="text-slate-500">${shortDate(t.due)}</span>`;
     }
 
+    // --- Modale (Esc zamyka) ---
+    function openModal(el) { el.classList.remove('hidden'); el.classList.add('flex'); }
+    function closeModals() {
+      document.querySelectorAll('#edit-modal, #confirm-modal').forEach(m => { m.classList.add('hidden'); m.classList.remove('flex'); });
+      editingId = null; onConfirm = null;
+    }
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModals(); });
+    document.querySelectorAll('#edit-modal, #confirm-modal').forEach(m => {
+      m.addEventListener('click', e => { if (e.target === m || e.target.closest('[data-close]')) closeModals(); });
+    });
+    function askConfirm(title, text, label, fn) {
+      $('#confirm-heading').textContent = title;
+      $('#confirm-text').textContent = text;
+      $('#confirm-ok').textContent = label;
+      onConfirm = fn;
+      openModal($('#confirm-modal'));
+    }
+    $('#confirm-ok').addEventListener('click', () => { const fn = onConfirm; closeModals(); if (fn) fn(); });
+
+    // --- Widok ---
     function visibleTasks() {
+      const key = (t) => t.due || '9999-99-99';
       return tasks
         .filter(t => filter === 'all' || (filter === 'done' ? t.done : !t.done))
         .filter(t => t.title.toLowerCase().includes(query))
         .sort((a, b) =>
           (a.done - b.done) ||
           (PRIO[a.prio].order - PRIO[b.prio].order) ||
-          ((a.due || '9999') > (b.due || '9999') ? 1 : (a.due || '9999') < (b.due || '9999') ? -1 : 0) ||
+          (key(a) < key(b) ? -1 : key(a) > key(b) ? 1 : 0) ||
           (b.created - a.created));
     }
 
     function render() {
-      // postęp
-      const total = tasks.length, done = tasks.filter(t => t.done).length;
-      $('#progress-label').textContent = total ? `${done} z ${total} zrobione` : 'Brak zadań';
+      // postęp i liczniki
+      const total = tasks.length, done = tasks.filter(t => t.done).length, today = isoToday();
+      const open = tasks.filter(t => !t.done);
+      const overdue = open.filter(t => t.due && t.due < today).length;
+      const dueToday = open.filter(t => t.due === today).length;
       const pct = total ? Math.round(done / total * 100) : 0;
+      $('#progress-label').textContent = total ? `${done} z ${total} zrobione` : 'Brak zadań';
       $('#progress-pct').textContent = total ? pct + '%' : '';
       $('#progress-bar').style.width = pct + '%';
+      $('#stats').innerHTML =
+        `<span class="${BADGE} bg-sky-50 text-sky-700">Do zrobienia: ${open.length}</span>` +
+        (dueToday ? `<span class="${BADGE} bg-amber-50 text-amber-700">Na dziś: ${dueToday}</span>` : '') +
+        (overdue ? `<span class="${BADGE} bg-red-50 text-red-700">Po terminie: ${overdue}</span>` : '') +
+        (done ? `<span class="${BADGE} bg-emerald-50 text-emerald-700">Zrobione: ${done}</span>` : '');
 
       // filtry
       document.querySelectorAll('#filters button').forEach(b => {
-        const on = b.dataset.filter === filter;
-        b.className = 'rounded-md px-3 py-1.5 font-medium transition ' + (on
-          ? 'bg-white shadow-sm dark:bg-slate-700'
-          : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100');
-        b.setAttribute('aria-selected', on);
+        b.className = b.dataset.filter === filter ? BTN_PRIMARY : BTN_SECONDARY;
       });
 
-      // lista
+      // wiersze
       const items = visibleTasks();
-      list.innerHTML = items.map(t => {
-        const p = PRIO[t.prio], due = dueLabel(t);
-        return `
-        <li data-id="${t.id}" class="group relative flex items-start gap-3 overflow-hidden rounded-xl bg-white py-3 pl-5 pr-3 shadow-sm ring-1 ring-stone-200 dark:bg-slate-900 dark:ring-slate-800 ${t.done ? 'task-done' : ''}">
-          <span class="absolute inset-y-0 left-0 w-1.5 ${p.bar}"></span>
-          <button data-act="toggle" role="checkbox" aria-checked="${t.done}" aria-label="Oznacz jako zrobione"
-            class="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-md border-2 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 ${t.done ? 'border-emerald-600 bg-emerald-600 text-white' : 'border-stone-300 hover:border-emerald-600 dark:border-slate-600'}">
-            ${t.done ? '<svg viewBox="0 0 20 20" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="3"><path d="M4 10l4 4 8-8"/></svg>' : ''}
-          </button>
-          <div class="min-w-0 flex-1">
-            <p class="t-title cursor-text break-words leading-snug" data-act="edit" title="Kliknij dwukrotnie, aby edytować">${esc(t.title)}</p>
-            <div class="mt-1.5 flex flex-wrap items-center gap-2 text-xs">
-              <span class="rounded-full px-2 py-0.5 font-medium ${p.chip}">${p.label}</span>
-              ${due ? `<span class="${due.overdue ? 'font-semibold text-rose-600 dark:text-rose-400' : 'text-slate-500 dark:text-slate-400'}">${due.text}</span>` : ''}
+      $('#rows').innerHTML = items.map(t => `
+        <tr data-id="${esc(t.id)}" class="border-b border-slate-100 hover:bg-slate-50 ${t.done ? 'task-done' : ''}">
+          <td class="px-4 py-3 align-top">
+            <input type="checkbox" data-act="toggle" ${t.done ? 'checked' : ''} aria-label="Oznacz jako zrobione"
+              class="mt-0.5 h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500">
+          </td>
+          <td class="px-4 py-3 align-top">
+            <div class="t-title break-words text-slate-800">${esc(t.title)}</div>
+            <div class="mt-1.5 flex flex-wrap items-center gap-1.5 text-xs sm:hidden">${prioBadge(t)}${dueHtml(t)}</div>
+          </td>
+          <td class="hidden px-4 py-3 align-top sm:table-cell">${prioBadge(t)}</td>
+          <td class="hidden px-4 py-3 align-top text-xs sm:table-cell">${dueHtml(t)}</td>
+          <td class="px-4 py-2 align-top">
+            <div class="flex justify-end gap-1">
+              <button type="button" data-act="edit" aria-label="Edytuj" class="rounded-lg p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500">${ICON_EDIT}</button>
+              <button type="button" data-act="delete" aria-label="Usuń" class="rounded-lg p-2 text-slate-500 hover:bg-red-50 hover:text-red-600 focus:outline-none focus:ring-2 focus:ring-blue-500">${ICON_TRASH}</button>
             </div>
-          </div>
-          <button data-act="delete" aria-label="Usuń zadanie"
-            class="rounded-md p-1 text-slate-400 opacity-0 transition hover:bg-rose-50 hover:text-rose-600 focus:opacity-100 group-hover:opacity-100 dark:hover:bg-rose-950 max-sm:opacity-100">
-            <svg viewBox="0 0 20 20" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 5l10 10M15 5L5 15"/></svg>
-          </button>
-        </li>`;
-      }).join('');
+          </td>
+        </tr>`).join('');
 
+      // pusty stan
       const msg = !tasks.length ? 'Lista jest pusta. Dodaj pierwsze zadanie powyżej.'
         : !items.length ? (query ? 'Nic nie pasuje do wyszukiwania.' : filter === 'done' ? 'Nic jeszcze nie zrobiono.' : 'Wszystko zrobione.')
         : '';
-      empty.textContent = msg;
-      empty.classList.toggle('hidden', !msg);
+      $('#empty').textContent = msg;
+      $('#empty').classList.toggle('hidden', !msg);
     }
 
-    // dodawanie
+    // --- Dodawanie ---
     $('#add-form').addEventListener('submit', e => {
       e.preventDefault();
       const title = $('#new-title').value.trim();
@@ -201,49 +311,48 @@
       render();
     });
 
-    // akcje na liście
-    list.addEventListener('click', e => {
-      const btn = e.target.closest('[data-act]');
-      if (!btn) return;
-      const id = btn.closest('li').dataset.id;
+    // --- Akcje w wierszach ---
+    $('#rows').addEventListener('click', e => {
+      const el = e.target.closest('[data-act]');
+      if (!el) return;
+      const id = el.closest('tr').dataset.id;
       const t = tasks.find(x => x.id === id);
-      if (btn.dataset.act === 'toggle') { t.done = !t.done; save(); render(); }
-      if (btn.dataset.act === 'delete') { tasks = tasks.filter(x => x.id !== id); save(); render(); }
+      if (!t) return;
+      if (el.dataset.act === 'toggle') { t.done = !t.done; save(); render(); }
+      if (el.dataset.act === 'delete') { tasks = tasks.filter(x => x.id !== id); save(); render(); }
+      if (el.dataset.act === 'edit') {
+        editingId = id;
+        $('#edit-title').value = t.title; $('#edit-prio').value = t.prio; $('#edit-due').value = t.due || '';
+        openModal($('#edit-modal')); $('#edit-title').focus();
+      }
     });
 
-    // edycja tytułu (dwuklik)
-    list.addEventListener('dblclick', e => {
-      const p = e.target.closest('[data-act="edit"]');
-      if (!p) return;
-      const id = p.closest('li').dataset.id;
-      const t = tasks.find(x => x.id === id);
-      const input = document.createElement('input');
-      input.value = t.title; input.maxLength = 200;
-      input.className = 'w-full rounded-md border border-emerald-600 bg-transparent px-2 py-1 focus:outline-none';
-      p.replaceWith(input); input.focus(); input.select();
-      let finished = false;
-      const finish = (ok) => {
-        if (finished) return; finished = true;
-        const v = input.value.trim();
-        if (ok && v) { t.title = v; save(); }
-        render();
-      };
-      input.addEventListener('keydown', ev => { if (ev.key === 'Enter') finish(true); if (ev.key === 'Escape') finish(false); });
-      input.addEventListener('blur', () => finish(true));
+    // --- Zapis edycji ---
+    $('#edit-form').addEventListener('submit', e => {
+      e.preventDefault();
+      const t = tasks.find(x => x.id === editingId);
+      const title = $('#edit-title').value.trim();
+      if (t && title) { t.title = title; t.prio = $('#edit-prio').value; t.due = $('#edit-due').value || ''; save(); }
+      closeModals(); render();
     });
 
-    // filtry i szukanie
+    // --- Filtry i szukanie ---
     $('#filters').addEventListener('click', e => {
       const b = e.target.closest('[data-filter]'); if (!b) return;
       filter = b.dataset.filter; render();
     });
     $('#search').addEventListener('input', e => { query = e.target.value.trim().toLowerCase(); render(); });
 
-    // stopka
+    // --- Usuwanie zrobionych ---
     $('#clear-done').addEventListener('click', () => {
       const n = tasks.filter(t => t.done).length;
-      if (n && confirm(`Usunąć zrobione zadania (${n})?`)) { tasks = tasks.filter(t => !t.done); save(); render(); }
+      if (!n) return;
+      askConfirm('Usunąć zrobione zadania?', `Zostanie usuniętych zadań: ${n}. Tej operacji nie można cofnąć.`, 'Usuń', () => {
+        tasks = tasks.filter(t => !t.done); save(); render();
+      });
     });
+
+    // --- Eksport / import ---
     $('#export').addEventListener('click', () => {
       const blob = new Blob([JSON.stringify(tasks, null, 2)], { type: 'application/json' });
       const a = document.createElement('a');
@@ -261,23 +370,16 @@
           id: String(t.id || Date.now() + Math.random()), title: t.title.slice(0, 200),
           prio: PRIO[t.prio] ? t.prio : 'normal', due: t.due || '', done: !!t.done, created: t.created || Date.now()
         }));
-        if (confirm(`Zastąpić obecną listę ${clean.length} zadaniami z pliku?`)) { tasks = clean; save(); render(); }
-      } catch { alert('Nie udało się wczytać pliku. Wybierz plik JSON wyeksportowany z tej strony.'); }
+        askConfirm('Zastąpić obecną listę?', `Lista zostanie zastąpiona zadaniami z pliku (${clean.length}).`, 'Zastąp', () => {
+          tasks = clean; save(); render();
+        });
+      } catch {
+        askConfirm('Nie udało się wczytać pliku', 'Wybierz plik JSON wyeksportowany z tej strony.', 'OK', null);
+      }
       e.target.value = '';
     });
 
-    // przełącznik motywu
-    const themeBtn = $('#theme-toggle');
-    function syncThemeBtn() {
-      themeBtn.textContent = document.documentElement.classList.contains('dark') ? 'Motyw jasny' : 'Motyw ciemny';
-    }
-    themeBtn.addEventListener('click', () => {
-      const dark = document.documentElement.classList.toggle('dark');
-      try { localStorage.setItem('todo-theme', dark ? 'dark' : 'light'); } catch {}
-      syncThemeBtn();
-    });
-    syncThemeBtn();
-
+    // --- Start ---
     $('#today').textContent = new Date().toLocaleDateString('pl-PL', { weekday: 'long', day: 'numeric', month: 'long' });
     render();
   </script>
